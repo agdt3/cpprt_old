@@ -150,34 +150,30 @@ vec3 Transform::upvector(const vec3 &up, const vec3 & zvec)
 bool Transform::solve_quadratic(float a, float b, float c, float &r1, float &r2) {
     //ax^2 + bx + c = 0
     //x = (-b +/- sqrt(b^2 - 4ac)) / 2a
-    if ((pow(b, 2) - (4.0 * a * c)) < 0) {
-        //complex root - no intersection
-        return false; 
-    }    
-
-    float formula = sqrt(pow(b, 2) - 4.0 * a * c); 
-    r1 = (-b + formula) / (2 * a);
-    r2 = (-b - formula) / (2 * a);
     
-    //TODO: floats should be compared with some tolerance
-    if (r1 == r2) {
-        //equal is tangent
-        return false;
+    float discriminant = b * b - 4 * a * c;
+    
+    //complex root - no intersection
+    if (discriminant < 0) return false;
+    else if (discriminant == 0) {
+        r1 = r2 = -0.5 * b / a; 
     }
-    else if (r1 > 0 && r2 > 0) {
-        //two unequal, > 0 roots
-        if (r2 < r1) {
-            float temp = r1;
-            r1 = r2;
-            r2 = temp;
-        }
-        return true;
+    else {
+        float q = (b > 0) ? -0.5 * (b + sqrt(discriminant)) : -0.5 * (b - sqrt(discriminant));
+        r1 = q / a;
+        r2 = c / q;
     }
+    //equal is a tangent
+    //instead of r1 == r2 for floats, use epsilon difference comparison
+    float epsilon = 0.001;
+    if (abs(r1 - r2) < epsilon) return false;
     else if ((r1 > 0 && r2 < 0) || (r2 > 0 && r1 < 0)) {
         // one > 0, one < 0 - ray is inside sphere
         return false;
     }
-    return false;
+
+    if (r1 > r2) std::swap(r2, r1);
+    return true;
 }
 
 Transform::Transform()
