@@ -15,9 +15,6 @@ TEST(remapPixel, remapsCorrectly) {
     //y = (1 - (2 * (0 + 0.5) / 480)) * 0.785
     */
 
-//todo: refactor global variables into camera object
-    float fovx = 90.0;
-    float angle = tan(Transform::degToRad(fovx/2));
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera cam = Camera(matp, 640, 480, 90.0, 45.0, vec3(0.0));

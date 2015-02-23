@@ -8,6 +8,7 @@ class Camera {
 public:
 	float near = 1.0;
     float far = 10^8;
+    int bpp = 24;
     float width, height, fovx, fovy, angle, aspect_ratio;
 	mat4 cameraToWorld, worldToCamera;
     vec3 origin;

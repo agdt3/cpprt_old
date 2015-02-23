@@ -1,5 +1,4 @@
 #include "src/ray.h"
-#include "src/camera.h"
 #include <iostream>
 
 Ray::Ray(vec3 orig, vec3 dir, RayType rt) {
@@ -22,7 +21,6 @@ Pixel::Pixel(int xin, int yin, Camera* cam) {
 
 void Pixel::remap() {
 	//remaps in several steps to screen space
-	std::cout << camera->width << " " << camera->angle << " " << camera->aspect_ratio << std::endl;
     x = (2 * ((x + 0.5) / camera->width) - 1) * camera->angle * camera->aspect_ratio;
 	y = (1 - 2.0 * ((y + 0.5) / camera->height)) * camera->angle;
     //x = (2 * (( x + 0.5 ) * INVWIDTH) - 1) * ANGLE * ASPECT_RATIO;

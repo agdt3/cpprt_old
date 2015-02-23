@@ -10,6 +10,7 @@
 #include "src/ray.h"
 #include "src/objects.h"
 #include "gtest/gtest.h"
+#include "src/camera.h"
 
 using namespace std;
 
@@ -94,13 +95,18 @@ void tracer() {
 */
 
 int main(int argc, char* argv[]) {
-/*
     //won't be doing rotation, translation, so init is fine, I think
 	//mat4 camera_world = Transform::lookAt(eyeinit, centerinit, upinit);
 
-	//init_objects();
-	FreeImage_Initialise();
-	FIBITMAP* bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
+    //init_objects();
+
+	mat4 matv = mat4(1.0);
+    mat4 *matp = &matv;
+    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    Camera *camp = &cam;
+
+    FreeImage_Initialise();
+	FIBITMAP* bitmap = FreeImage_Allocate(cam.width, cam.height, cam.bpp);
 
     mat4 tr = Transform::translate(0.0, 4.0, -18.0);
     Light l1 = Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point); //wat??
@@ -134,8 +140,8 @@ int main(int argc, char* argv[]) {
 	//objects[2] = plane1;
 	//objects[3] = triangle1;
     int count = 0;
-    for (int i = 0; i < WIDTH; i++) {
-		for (int j = 0; j < HEIGHT; j++) {
+    for (int i = 0; i < cam.width; i++) {
+		for (int j = 0; j < cam.height; j++) {
 			//base color
 			RGBQUAD color;
 			color.rgbRed = 0;
@@ -143,7 +149,7 @@ int main(int argc, char* argv[]) {
 			color.rgbBlue = 0;
 
 			//base pixel remapping
-			Pixel pixel = Pixel(i, j);
+			Pixel pixel = Pixel(i, j, camp);
             pixel.set_color(vec4(0.0, 0.0, 0.0, 1.0));
 			pixel.remap();
 
@@ -249,7 +255,7 @@ int main(int argc, char* argv[]) {
 			}
             // y value is inverted because pixel maps calculate with y=0 at the top left
             // but y = 0 at the bottom left for image representations
-            FreeImage_SetPixelColor(bitmap, i, HEIGHT - j, &color);
+            FreeImage_SetPixelColor(bitmap, i, cam.height - j, &color);
 		}
 	}
     cout << count << endl;
@@ -260,7 +266,7 @@ int main(int argc, char* argv[]) {
 
     printf("Hit any key to continue> ");
     getchar();
-*/
+
     //system("pause");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
