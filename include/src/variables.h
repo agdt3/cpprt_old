@@ -5,6 +5,7 @@
 
 //const int NUM_OBJECTS = 2;
 const float MPI = 3.14125953589793;
+/*
 const int WIDTH = 640;
 const float INVWIDTH = 1.0 / WIDTH;
 const int HEIGHT = 480;
@@ -21,6 +22,7 @@ const float ANGLE = tan(Transform::degToRad(FOVX/2));
 //const float INFINITY = pow(10.0, 8.0);
 const float NEAR = 0.1;
 const float FAR = 1000;
+*/
 
 enum class ObjType {
     sphere=0,

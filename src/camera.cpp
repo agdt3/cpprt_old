@@ -1,11 +1,13 @@
 #include "src/camera.h"
 
-Camera::Camera(mat4* ctw) {
-	fov = FOVX;
-	angle = ANGLE;
-	nearClippingPlane = NEAR;
-	farClippingPlane = FAR;
+Camera::Camera(mat4* ctw, float w, float h, float fx, float fy, vec3 ori) {
 	cameraToWorld = *ctw; //start at origin
 	worldToCamera = glm::inverse(cameraToWorld);
-    vec3 origin = vec3(0.0);
+    origin = ori;
+    fovx = fx;
+    fovy = fy;
+    width = w;
+    height = h;
+    aspect_ratio = w / h;
+    angle = tan(Transform::degToRad(fovx/2));
 }

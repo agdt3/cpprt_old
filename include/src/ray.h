@@ -1,5 +1,6 @@
 #include "transform.h"
 #include "variables.h"
+#include "camera.h"
 #include <ostream>
 
 #ifndef RAY_H
@@ -9,7 +10,7 @@ class Ray {
 public:
 	vec3 origin, direction;
 	RayType type;
-	
+
 	Ray(vec3 orig, vec3 dir, RayType rt);
 	vec3 operator() (const float &t);
 };
@@ -17,8 +18,10 @@ public:
 class Pixel {
 public:
 	float x, y;
-    vec4 color;  
-    Pixel(int xin, int yin);
+    vec4 color;
+    Camera* camera;
+
+    Pixel(int, int, Camera*);
 	void remap();
     vec3 map();
     void set_color(vec4);
