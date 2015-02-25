@@ -8,6 +8,7 @@
 #include "FreeImage/FreeImage.h"
 #include "src/transform.h"
 #include "src/ray.h"
+#include "src/pixel.h"
 #include "src/objects.h"
 #include "gtest/gtest.h"
 #include "src/camera.h"

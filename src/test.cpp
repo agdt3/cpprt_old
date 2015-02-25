@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#include <src/camera.h>
 #include <src/ray.h>
+#include <src/pixel.h>
 #include <src/objects.h>
 #include <iostream>
 
