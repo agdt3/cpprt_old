@@ -21,6 +21,7 @@ Pixel::Pixel(int xin, int yin, Camera* cam) {
 
 void Pixel::remap() {
 	//remaps in several steps to screen space
+    //this breaks if the fovx is not 90, but a more realisting 45deg
     x = (2 * ((x + 0.5) / camera->width) - 1) * camera->angle * camera->aspect_ratio;
 	y = (1 - 2.0 * ((y + 0.5) / camera->height)) * camera->angle;
     //x = (2 * (( x + 0.5 ) * INVWIDTH) - 1) * ANGLE * ASPECT_RATIO;

@@ -57,12 +57,12 @@ void trace_ray(Ray &ray, Pixel &pixel, int reflections){
             //}
 
         }
-    }	
+    }
 }
 
 void tracer() {
 	FIBITMAP* bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
-    
+
     for (int i = 0; i < WIDTH; i++) {
 		for (int j = 0; j < HEIGHT; j++) {
 			//base color
@@ -99,7 +99,6 @@ int main(int argc, char* argv[]) {
 	//mat4 camera_world = Transform::lookAt(eyeinit, centerinit, upinit);
 
     //init_objects();
-
 	mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
@@ -156,6 +155,7 @@ int main(int argc, char* argv[]) {
 			//base camera ray
             //image is inversed here, I think ???
             //however this screws up the orientation of the plane, leading to the idea that the sphere intersection algorithm is wrong
+
             vec3 direction = vec3(pixel.x, pixel.y, -1); //direction of negative z
 			//vec3 direction = pixel.map();
             direction = glm::normalize(direction);
@@ -266,7 +266,6 @@ int main(int argc, char* argv[]) {
 
     printf("Hit any key to continue> ");
     getchar();
-
     //system("pause");
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
