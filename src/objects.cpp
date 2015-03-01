@@ -23,46 +23,37 @@ Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist) : Object(otw, col,
     //std::cout << "s" << center.x << " " << center.y << " " << center.z << std::endl;
 	radius = r; //define the radius explicitely, not as part of a transform, although really should
 }
-/*
-bool Sphere::intersects (const Ray* r, vec3* hit, vec3* n, float* t0, float* t1) {
-	int method = 2;
-    const Ray *ray = r;
-    std::cout << *ray;
-*/
-bool Sphere::intersects (const Ray* r, vec3* hit, vec3* n, float* t0, float* t1) {
-	int method = 2;
-    const Ray *ray = r;
-    std::cout << *ray;
 
-    /*
+bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t1) {
+	int method = 2;
     if (method == 1) {
         vec3 center3 = vec3(center.x, center.y, center.z); //ignore w here for now
-	    vec3 L = center3 - ray->origin;
+	    vec3 L = center3 - ray.origin;
 
-        float t_ca = glm::dot(L, ray->direction);
+        float t_ca = glm::dot(L, ray.direction);
         if(t_ca < 0) return false;
 
 	    float dsqr = glm::dot(L, L) - pow(t_ca, 2);
         if(dsqr > (radius*radius)) return false;
 
 	    float t_hc = sqrt(pow(radius, 2) - dsqr);
-        *t0 = t_ca - t_hc; //distance to point of impact
-	    *t1 = t_ca + t_hc; //distance to other side of sphere
+        t0 = t_ca - t_hc; //distance to point of impact
+	    t1 = t_ca + t_hc; //distance to other side of sphere
 
-        float dist = easing_distance * *t0;
-	    *hit = ray->origin + (dist * ray->direction);
+        float dist = easing_distance * t0;
+	    hit = ray.origin + (dist * ray.direction);
 
 	    //try to calculate the n vector
 	    //*n = (*hit - center3);
-	    *n = (*hit - center3) / radius;
+	    n = (hit - center3) / radius;
 
 	    return true;
     }
     else if (method == 2) {
         vec3 center3 = vec3(center.x, center.y, center.z); //ignore w here for now
-        vec3 L = ray->origin - center3;
-        float a = glm::dot(ray->direction, ray->direction);
-        float b = (float)2.0 * glm::dot(ray->direction, L);
+        vec3 L = ray.origin - center3;
+        float a = glm::dot(ray.direction, ray.direction);
+        float b = (float)2.0 * glm::dot(ray.direction, L);
         float c = glm::dot(L, L) - pow(radius, 2);
 
         float r1;
@@ -70,19 +61,19 @@ bool Sphere::intersects (const Ray* r, vec3* hit, vec3* n, float* t0, float* t1)
         bool hits = Transform::solve_quadratic(a, b, c, r1, r2);
         if (hits) {
             //std::cout << "hit" << std::endl;
-            *t0 = r1;
-            *t1 = r2;
+            t0 = r1;
+            t1 = r2;
 
             float dist = easing_distance * glm::abs(r1);
-	        *hit = ray->origin + (dist * (ray->direction - ray->origin));
-	        *n = (*hit - center3) / radius;
+	        hit = ray.origin + (dist * (ray.direction - ray.origin));
+	        n = (hit - center3) / radius;
 
             return true;
         }
         else {
             return false;
         }
-    }*/
+    }
     return false;
 }
 
@@ -94,7 +85,7 @@ Light::Light(float r, mat4 *otw, vec4 col, float ease_dist=1.0, LightType l_type
 	radius = r;
 }
 
-bool Light::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t1) {
+bool Light::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t1) {
 	//We want to know first if an intersection can even occur with this light
 	//If it can't, then there's no reason to check the rest of the object stack
 
@@ -111,10 +102,10 @@ bool Light::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t1
     else if (ltype == LightType::point) {
 		//treat this like a sphere
 		vec3 center3 = vec3(center.x, center.y, center.z); //ignore w here for now
-        vec3 L = ray->origin - center3;
+        vec3 L = ray.origin - center3;
 
-        float a = glm::dot(ray->direction, ray->direction);
-        float b = (float)2.0 * glm::dot(ray->direction, L);
+        float a = glm::dot(ray.direction, ray.direction);
+        float b = (float)2.0 * glm::dot(ray.direction, L);
         float c = glm::dot(L, L) - pow(radius, 2);
 
         float r1;
@@ -122,13 +113,13 @@ bool Light::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t1
         bool hits = Transform::solve_quadratic(a, b, c, r1, r2);
         if (hits) {
             //std::cout << "hit" << std::endl;
-            *t0 = r1;
-            *t1 = r2;
+            t0 = r1;
+            t1 = r2;
 
             float dist = easing_distance * glm::abs(r1);
-            *hit = ray->origin + (dist * ray->direction);
+            hit = ray.origin + (dist * ray.direction);
 
-            *n = (*hit - center3) / radius;
+            n = (hit - center3) / radius;
 
             return true;
         }
@@ -139,7 +130,6 @@ bool Light::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t1
 	else return false;
 }
 
-
 Triangle::Triangle(vec3 A, vec3 B, vec3 C, vec4 col) {
 	v0 = A;
 	v1 = B;
@@ -149,10 +139,10 @@ Triangle::Triangle(vec3 A, vec3 B, vec3 C, vec4 col) {
 	type = ObjType::triangle;
 }
 
-bool Triangle::intersects (const Ray* ray, vec3* hit, vec3* n_vec, float* t0, float* t1){
+bool Triangle::intersects (const Ray &ray, vec3 &hit, vec3 &n_vec, float &t0, float &t1) {
 	//first test if ray intersects the plane in whicht the triangle lives
-	vec3 p0 = ray->origin;
-	vec3 p1 = ray->direction;
+	vec3 p0 = ray.origin;
+	vec3 p1 = ray.direction;
 	float denominator = glm::dot(n, p1 - p0);
 	if (denominator == 0) {
 		return false; //ray is in plane or parallel to plane
@@ -179,10 +169,10 @@ bool Triangle::intersects (const Ray* ray, vec3* hit, vec3* n_vec, float* t0, fl
 	float t = t_num / st_denom;
 
 	if (s >= 0 && t >= 0 && s+t <= 1){
-		*t0 = dist;
+		t0 = dist;
 		float eased_dist = glm::abs(dist) * 0.99;
-		*hit = p0 + eased_dist * (p1 - p0);
-        *n_vec = n;
+		hit = p0 + eased_dist * (p1 - p0);
+        n_vec = n;
 		return true;
 	}
 
@@ -201,10 +191,10 @@ Plane::Plane(vec3 A, vec3 B, vec3 C, vec4 col){
 	type = ObjType::plane;
 }
 
-bool Plane::intersects (const Ray* ray, vec3* hit, vec3* n_vec, float* t0, float* t1){
+bool Plane::intersects (const Ray &ray, vec3 &hit, vec3 &n_vec, float &t0, float &t1) {
 	//first test if ray intersects the plane in whicht the triangle lives
-	vec3 p1 = ray->origin;
-	vec3 p0 = ray->direction;
+	vec3 p1 = ray.origin;
+	vec3 p0 = ray.direction;
 
 	float denominator = glm::dot(n, p1 - p0);
 	if (denominator == 0) {
@@ -216,11 +206,11 @@ bool Plane::intersects (const Ray* ray, vec3* hit, vec3* n_vec, float* t0, float
 	if (dist < 0) {
         //std::cout << "r.o " << p0 << std::endl;
         //std::cout << "r.d " << p1 << std::endl;
-		*t0 = abs(dist);
+		t0 = abs(dist);
 		//float eased_dist = dist * 0.95;
 		float eased_dist = glm::abs(dist) * 0.99;
-		*hit = p0 + eased_dist * (p1 - p0);
-        *n_vec = n;
+		hit = p0 + eased_dist * (p1 - p0);
+        n_vec = n;
 		return  true;
 	}
 

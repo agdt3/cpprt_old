@@ -15,9 +15,10 @@
 
 using namespace std;
 
+//global
+int HIT_COUNT = 0;
 const int NUM_OBJECTS = 1;
 const int MAX_REFLECTIONS = 1;
-//global
 Object* objects[NUM_OBJECTS];
 
 /*
@@ -67,19 +68,12 @@ Camera* world_setup(){
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera *camp = new Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-    //Camera *camp = &cam;
 
     object_setup();
     return camp;
 }
 
-void test_ray (Ray &ray) {
-    cout << ray << endl;
-    cout << ray->direction <<endl;
-}
-
 void trace_ray(Ray *ray, Pixel *pixel, int reflections){
-    //cout << "inside trace_ray";
     if (reflections > MAX_REFLECTIONS){
         return;
     }
@@ -87,21 +81,12 @@ void trace_ray(Ray *ray, Pixel *pixel, int reflections){
         reflections++;
     }
 
-    float dist1, dist2;
-	float nearest = INFINITY;
-    vec3 hit = vec3(0.0);
-	vec3 n = vec3(0.0);
-
     mat4 tr = mat4(1.0);
-    tr = Transform::translate(0.0, 1.0, -20.0);
+    tr = Transform::translate(0.0, 4.0, -20.0);
     Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
-    Object *obj= &sp2;
-    //obj->intersects(ray, hit, n, dist1, dist2);
-    cout << ray << endl;
-    test_ray(*ray);
+    Object *sphere2 = &sp2;
+	objects[0] = sphere2;
 
-
-    /*
     for (int k = 0; k < NUM_OBJECTS; k++) {
 	    float dist1 = INFINITY;
 		float dist2 = INFINITY;
@@ -110,8 +95,8 @@ void trace_ray(Ray *ray, Pixel *pixel, int reflections){
 		vec3 n = vec3(0.0);
 
 		Object* obj = objects[k];
-        if (obj->intersects(ray, &hit, &n, &dist1, &dist2)) {
-            cout<<"I hit a thing"<<endl;
+        if (obj->intersects(*ray, hit, n, dist1, dist2)) {
+            HIT_COUNT++;
             if (dist1 < nearest) {
                 nearest = dist1;
                 if (ray->type == RayType::camera) {
@@ -125,22 +110,20 @@ void trace_ray(Ray *ray, Pixel *pixel, int reflections){
 			//Ray nray = Ray(hit, dir, RayType::shadow);
             //trace_ray(nray, pixel, reflections);
         }
-    }*/
+    }
 }
 
 void tracer() {
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
-    cout << "created mat4";
+
     Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-    cout << cam.width;
     Camera *camera = &cam;
-    cout << "created camera";
-    cout << camera->width << " " << camera->height << endl;
+
     FreeImage_Initialise();
     FIBITMAP* bitmap = FreeImage_Allocate(camera->width, camera->height, camera->bpp);
     RGBQUAD color;
-    cout << "inside tracer";
+
     for (int i = 0; i < camera->width; i++) {
 		for (int j = 0; j < camera->height; j++) {
 			//base color
@@ -163,9 +146,11 @@ void tracer() {
             trace_ray(&ray, &pixel, reflections);
 
             //draw pixel
-            color.rgbRed = pixel.color.r;
-            color.rgbGreen = pixel.color.g;
-            color.rgbBlue = pixel.color.b;
+            vec3 rgb_color = pixel.convert_rgba_to_rgb(vec4(1.0));
+			//cout << rgb_color.r << " " << rgb_color.g << " " << rgb_color.b << endl;
+            color.rgbRed = (double)(rgb_color.r * 255.0);
+		    color.rgbGreen = (double)(rgb_color.g * 255.0);
+			color.rgbBlue = (double)(rgb_color.b * 255.0);
 			FreeImage_SetPixelColor(bitmap, i, camera->height-j, &color);
         }
     }
@@ -351,6 +336,7 @@ int main(int argc, char* argv[]) {
     */
     //Camera *camp = world_setup();
     tracer();
+    cout << "hits " << HIT_COUNT << " total " << (640 * 480) << endl;
     printf("Hit any key to continue> ");
     getchar();
 

@@ -25,8 +25,7 @@ public:
 
 	Object();
 	Object(mat4*, vec4, float);
-	virtual bool intersects (const Ray*, vec3*, vec3*, float*, float*) =0;
-	//virtual bool intersects (const Ray&, vec3&, vec3&, float&, float&) =0;
+	virtual bool intersects (const Ray&, vec3&, vec3&, float&, float&) =0;
 };
 
 class Sphere : public Object {
@@ -35,8 +34,7 @@ public:
 	float radius;
 
 	Sphere(float, mat4*, vec4 col, float);
-	bool intersects (const Ray*, vec3*, vec3*, float*, float*);
-	//bool intersects (const Ray&, vec3&, vec3&, float&, float&);
+	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
 
 class Light : public Object {
@@ -47,7 +45,7 @@ public:
 	LightType ltype;
 
 	Light(float, mat4*, vec4, float, LightType);
-	bool intersects (const Ray*, vec3*, vec3*, float*, float*);
+	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 
 	//bool intersects_point(const Ray*, vec3*, vec3*, float*, float*);
 	//bool intersects_ambient(const Ray*, vec3*, vec3*, float*, float*);
@@ -59,7 +57,7 @@ public:
 	vec3 v0, v1, v2, n; //the 3 locations, with v0 being the origin, n is the normal
 
 	Triangle(vec3 A, vec3 B, vec3 C, vec4 col);
-	bool intersects (const Ray*, vec3*, vec3*, float*, float*);
+	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
 
 class Plane : public Object {
@@ -67,7 +65,7 @@ public:
 	vec3 v0, v1, v2, n;
 
 	Plane(vec3 A, vec3 B, vec3 C, vec4 col);
-	bool intersects (const Ray*, vec3*, vec3*, float*, float*);
+	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
 
 /*

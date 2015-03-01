@@ -129,12 +129,11 @@ TEST(Sphere, intersectionSingleAxis) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 0.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    vec3 hit;
-    vec3 n;
-    float dist1;
-    float dist2;
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
     //don't forget distance easing
     float TOLERANCE = 0.0001;
@@ -158,12 +157,11 @@ TEST(sphere, intersectionDoubleAxisAtAngle) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    vec3 hit;
-    vec3 n;
-    float dist1;
-    float dist2;
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
     float TOLERANCE = 0.0001;
     EXPECT_EQ(is_hit, true);
@@ -187,12 +185,11 @@ TEST(sphere, intersectionDoubleAxis) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    vec3 hit;
-    vec3 n;
-    float dist1;
-    float dist2;
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
@@ -217,12 +214,11 @@ TEST(Sphere, intersectionTripleAxis) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(1.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    vec3 hit;
-    vec3 n;
-    float dist1;
-    float dist2;
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
@@ -246,12 +242,11 @@ TEST(Light, intersectionTripleAxis) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(1.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    vec3 hit;
-    vec3 n;
-    float dist1;
-    float dist2;
-    bool is_hit = lg1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit = lg1.intersects(*rayp, hit, n, dist1, dist2);
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
@@ -282,15 +277,17 @@ TEST(Light, canBeIntersectedByReflectedShadowRay) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
     EXPECT_EQ(is_hit, true);
 
     vec3 sh_origin = hit;
     vec3 sh_direction = Transform::reflect(direction, n);
     Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
+    Ray *shadow_rayp = &shadow_ray;
 
-    bool light_is_hit = lg1.intersects(&shadow_ray, &light_hit, &light_n, &light_dist1, &light_dist2);
+    bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
 
     EXPECT_EQ(light_is_hit, true);
     EXPECT_NEAR(light_dist1, 1.0, TOLERANCE);
@@ -320,15 +317,17 @@ TEST(Light, intersectionToSphereCanBeBlockedByOwnSphereObject) {
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 1.0, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
     EXPECT_EQ(is_hit, true);
 
     vec3 sh_origin = hit;
     vec3 sh_direction = Transform::reflect(direction, n);
     Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
+    Ray *shadow_rayp = &shadow_ray;
 
-    bool light_is_hit = lg1.intersects(&shadow_ray, &light_hit, &light_n, &light_dist1, &light_dist2);
+    bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
 
     EXPECT_EQ(light_is_hit, false);
 }
@@ -345,15 +344,16 @@ TEST(Pixel, createsCorrectDirectionVector) {
     mat4 trsp = Transform::translate(0.0, 0.0, -3.0);
     Sphere sp1 = Sphere(1.0, &trsp, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
 
-    vec3 hit, light_hit, n, light_n;
-    float dist1, dist2, light_dist1, light_dist2;
+    vec3 hit, n;
+    float dist1, dist2;
     float TOLERANCE = 0.01;
 
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(pix.x, pix.y, -1.0);
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
     EXPECT_EQ(is_hit, true);
     EXPECT_NEAR(direction.x, 0.0, TOLERANCE);
     EXPECT_NEAR(direction.y, 0.0, TOLERANCE);
@@ -382,8 +382,9 @@ TEST(Pixel, createsCorrectReflectionVector) {
     vec3 origin = vec3(0.0);
     vec3 direction = glm::normalize(vec3(pix.x, pix.y, -1.0));
     Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
 
-    bool is_hit = sp1.intersects(&ray, &hit, &n, &dist1, &dist2);
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
     EXPECT_EQ(is_hit, true);
     EXPECT_NEAR(direction.x, 0.0, TOLERANCE);
     EXPECT_NEAR(direction.y, 0.234, TOLERANCE);
@@ -392,12 +393,11 @@ TEST(Pixel, createsCorrectReflectionVector) {
     vec3 sh_origin = hit;
     vec3 sh_direction = Transform::reflect(direction, n);
     Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
-    /*
-    std::cout << "dir " << direction << std::endl;
-    std::cout << "n " << n << std::endl;
-    std::cout << "shadow dir " << sh_direction << std::endl;
-    */
-    bool light_is_hit = lg1.intersects(&shadow_ray, &light_hit, &light_n, &light_dist1, &light_dist2);
+    Ray *shadow_rayp = &shadow_ray;
+    //std::cout << "dir " << direction << std::endl;
+    //std::cout << "n " << n << std::endl;
+    //std::cout << "shadow dir " << sh_direction << std::endl;
+
+    bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
     EXPECT_EQ(light_is_hit, true);
 }
-
