@@ -26,6 +26,7 @@ public:
 	Object();
 	Object(mat4*, vec4, float);
 	virtual bool intersects (const Ray*, vec3*, vec3*, float*, float*) =0;
+	//virtual bool intersects (const Ray&, vec3&, vec3&, float&, float&) =0;
 };
 
 class Sphere : public Object {
@@ -35,6 +36,7 @@ public:
 
 	Sphere(float, mat4*, vec4 col, float);
 	bool intersects (const Ray*, vec3*, vec3*, float*, float*);
+	//bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
 
 class Light : public Object {

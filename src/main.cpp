@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const int NUM_OBJECTS = 2;
+const int NUM_OBJECTS = 1;
 const int MAX_REFLECTIONS = 1;
 //global
 Object* objects[NUM_OBJECTS];
@@ -32,8 +32,54 @@ void init_objects() {
 		objects[i] = sphere;
 	}
 }*/
-/*
-void trace_ray(Ray &ray, Pixel &pixel, int reflections){
+
+void object_setup() {
+    mat4 tr = Transform::translate(0.0, 4.0, -18.0);
+    Light l1 = Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
+    Light *light1 = &l1;
+
+	mat4 world = mat4(1.0);
+	tr = Transform::translate(0.0, 1.0, -15.0);
+	mat4 final = world * tr;
+
+	//some local objects
+    Sphere sp1 = Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
+    Object *sphere1 = &sp1;
+
+    tr = Transform::translate(0.0, 1.0, -20.0);
+    Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
+    Object *sphere2 = &sp2;
+
+    Triangle tr1 = Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
+	Object *triangle1 = &tr1;
+
+    Plane pl1 = Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
+    Object *plane1 = &pl1;
+
+	objects[0] = sphere1;
+    //objects[1] = light1;
+    //objects[2] = sphere2;
+	//objects[2] = plane1;
+	//objects[3] = triangle1;
+}
+
+Camera* world_setup(){
+    mat4 matv = mat4(1.0);
+    mat4 *matp = &matv;
+    Camera *camp = new Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    //Camera *camp = &cam;
+
+    object_setup();
+    return camp;
+}
+
+void test_ray (Ray &ray) {
+    cout << ray << endl;
+    cout << ray->direction <<endl;
+}
+
+void trace_ray(Ray *ray, Pixel *pixel, int reflections){
+    //cout << "inside trace_ray";
     if (reflections > MAX_REFLECTIONS){
         return;
     }
@@ -41,66 +87,102 @@ void trace_ray(Ray &ray, Pixel &pixel, int reflections){
         reflections++;
     }
 
+    float dist1, dist2;
+	float nearest = INFINITY;
+    vec3 hit = vec3(0.0);
+	vec3 n = vec3(0.0);
+
+    mat4 tr = mat4(1.0);
+    tr = Transform::translate(0.0, 1.0, -20.0);
+    Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
+    Object *obj= &sp2;
+    //obj->intersects(ray, hit, n, dist1, dist2);
+    cout << ray << endl;
+    test_ray(*ray);
+
+
+    /*
     for (int k = 0; k < NUM_OBJECTS; k++) {
-	    float tmin = INFINITY;
-		float tmax = INFINITY;
-		vec3 hit = vec3(0.0);
+	    float dist1 = INFINITY;
+		float dist2 = INFINITY;
+	    float nearest = INFINITY;
+        vec3 hit = vec3(0.0);
 		vec3 n = vec3(0.0);
 
 		Object* obj = objects[k];
-		if (obj->intersects(&ray, &hit, &n, &tmin, &tmax)) {
-            //test_depth();
-            pixel.add_alpha_color(obj->color);
-            //if (obj->reflectance > 0) {
-            vec3 dir = Transform::reflect(ray.direction, n);
-			Ray nray = Ray(hit, dir, RayType::shadow);
-            trace_ray(nray, pixel, reflections);
-            //}
-
+        if (obj->intersects(ray, &hit, &n, &dist1, &dist2)) {
+            cout<<"I hit a thing"<<endl;
+            if (dist1 < nearest) {
+                nearest = dist1;
+                if (ray->type == RayType::camera) {
+                    pixel->set_color(obj->color);
+                }
+                else {
+                    pixel->add_alpha_color(obj->color);
+                }
+            }
+            //vec3 dir = Transform::reflect(ray.direction, n);
+			//Ray nray = Ray(hit, dir, RayType::shadow);
+            //trace_ray(nray, pixel, reflections);
         }
-    }
+    }*/
 }
 
 void tracer() {
-	FIBITMAP* bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
-
-    for (int i = 0; i < WIDTH; i++) {
-		for (int j = 0; j < HEIGHT; j++) {
+    mat4 matv = mat4(1.0);
+    mat4 *matp = &matv;
+    cout << "created mat4";
+    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    cout << cam.width;
+    Camera *camera = &cam;
+    cout << "created camera";
+    cout << camera->width << " " << camera->height << endl;
+    FreeImage_Initialise();
+    FIBITMAP* bitmap = FreeImage_Allocate(camera->width, camera->height, camera->bpp);
+    RGBQUAD color;
+    cout << "inside tracer";
+    for (int i = 0; i < camera->width; i++) {
+		for (int j = 0; j < camera->height; j++) {
 			//base color
-			RGBQUAD color;
-			color.rgbRed = 0;
-			color.rgbGreen = 0;
-			color.rgbBlue = 0;
+            color.rgbRed = 0.0;
+	        color.rgbGreen = 0.0;
+	        color.rgbBlue = 0.0;
 
 			//base pixel remapping
-			Pixel pixel = Pixel(i, j);
+			Pixel pixel = Pixel(i, j, camera);
 			pixel.remap();
-            pixel.set_color(vec4(0, 0, 0, 1));
+            pixel.set_color(vec4(0.0, 0.0, 0.0, 1.0));
 
-            vec3 direction = vec3(pixel.x, pixel.y, -1); //direction of negative z
+            vec3 direction = vec3(pixel.x, pixel.y, -1.0); //direction of negative z
 			direction = glm::normalize(direction);
 			vec3 origin = vec3(0.0);
+
 			//initial camera ray
             int reflections = 0;
             Ray ray = Ray(origin, direction, RayType::camera);
-            trace_ray(ray, pixel, reflections);
+            trace_ray(&ray, &pixel, reflections);
 
             //draw pixel
             color.rgbRed = pixel.color.r;
             color.rgbGreen = pixel.color.g;
             color.rgbBlue = pixel.color.b;
-			FreeImage_SetPixelColor(bitmap, i, j, &color);
+			FreeImage_SetPixelColor(bitmap, i, camera->height-j, &color);
         }
     }
+    if (FreeImage_Save(FIF_PNG, bitmap, "./test/test.png", 0)) {
+		cout << "Saved!";
+	}
+	FreeImage_DeInitialise();
 }
-*/
+
 
 int main(int argc, char* argv[]) {
     //won't be doing rotation, translation, so init is fine, I think
 	//mat4 camera_world = Transform::lookAt(eyeinit, centerinit, upinit);
 
     //init_objects();
-	mat4 matv = mat4(1.0);
+	/*
+    mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
     Camera *camp = &cam;
@@ -121,11 +203,9 @@ int main(int argc, char* argv[]) {
     Sphere sp1 = Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
     Object *sphere1 = &sp1;
 
-
     tr = Transform::translate(0.0, 1.0, -20.0);
     Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
     Object *sphere2 = &sp2;
-
 
     Triangle tr1 = Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
 	Object *triangle1 = &tr1;
@@ -268,6 +348,12 @@ int main(int argc, char* argv[]) {
     printf("Hit any key to continue> ");
     getchar();
     //system("pause");
+    */
+    //Camera *camp = world_setup();
+    tracer();
+    printf("Hit any key to continue> ");
+    getchar();
+
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

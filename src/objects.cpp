@@ -23,10 +23,18 @@ Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist) : Object(otw, col,
     //std::cout << "s" << center.x << " " << center.y << " " << center.z << std::endl;
 	radius = r; //define the radius explicitely, not as part of a transform, although really should
 }
-
-bool Sphere::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t1) {
+/*
+bool Sphere::intersects (const Ray* r, vec3* hit, vec3* n, float* t0, float* t1) {
 	int method = 2;
-    //bool easing = true; //note: this will break tests
+    const Ray *ray = r;
+    std::cout << *ray;
+*/
+bool Sphere::intersects (const Ray* r, vec3* hit, vec3* n, float* t0, float* t1) {
+	int method = 2;
+    const Ray *ray = r;
+    std::cout << *ray;
+
+    /*
     if (method == 1) {
         vec3 center3 = vec3(center.x, center.y, center.z); //ignore w here for now
 	    vec3 L = center3 - ray->origin;
@@ -74,7 +82,8 @@ bool Sphere::intersects (const Ray* ray, vec3* hit, vec3* n, float* t0, float* t
         else {
             return false;
         }
-    }
+    }*/
+    return false;
 }
 
 Light::Light(float r, mat4 *otw, vec4 col, float ease_dist=1.0, LightType l_type=LightType::point) : Object(otw, col, ease_dist) {
