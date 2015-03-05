@@ -24,12 +24,14 @@ OBJECTS = $(SOURCES:%.cpp=%.o)
 # Note that this relies on the assumption of a successful build, and is not dynamic
 DIR_OBJECTS = $(patsubst %.o, $(BUILDDIR)/%.o, $(OBJECTS))
 
+# Both of the following rules have tabs to indicated that they are empty
 all: clean $(EXE)
 	
 # An empty rule
 %.cpp:
 	
 # targets …: target-pattern: prereq-patterns …
+# Can build with -g debugging flag for gdb debugging
 $(OBJECTS): %.o: %.cpp
 	@echo "Building $@ from $<"
 	$(CXX) $(CXXFLAGS) $(INC) -c $(SRCDIR)/$< -o $(BUILDDIR)/$@

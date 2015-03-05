@@ -20,5 +20,4 @@ std::ostream & operator<< (std::ostream &stream, Ray const &r){
     stream << "ray origin (" << r.origin << ") ray dir (" << r.direction << ")" << std::endl;
     return stream;
 }
-
 #endif

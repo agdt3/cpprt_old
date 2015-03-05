@@ -28,5 +28,4 @@ std::ostream & operator<< (std::ostream &stream, Pixel const &p){
     stream << "x " << p.x << " y " << p.y << std::endl << "r " << p.color.r << " g " <<  p.color.g << " b " << p.color.b << " a " << p.color.a << std::endl; 
     return stream;
 }
-
 #endif

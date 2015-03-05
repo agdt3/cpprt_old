@@ -36,26 +36,23 @@ void init_objects() {
 
 void object_setup() {
     mat4 tr = Transform::translate(0.0, 4.0, -18.0);
-    Light l1 = Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
-    Light *light1 = &l1;
+    Light *light1 = new Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
 
 	mat4 world = mat4(1.0);
 	tr = Transform::translate(0.0, 1.0, -15.0);
 	mat4 final = world * tr;
 
 	//some local objects
-    Sphere sp1 = Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
-    Object *sphere1 = &sp1;
+    //Sphere sp1 = Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
+    //Object *sphere1 = &sp1;
+    Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
 
     tr = Transform::translate(0.0, 1.0, -20.0);
-    Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
-    Object *sphere2 = &sp2;
+    Sphere *sphere2 = new Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
 
-    Triangle tr1 = Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
-	Object *triangle1 = &tr1;
+    Triangle *triangle1 = new Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
 
-    Plane pl1 = Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
-    Object *plane1 = &pl1;
+    Plane *plane1 = new Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
 
 	objects[0] = sphere1;
     //objects[1] = light1;
@@ -64,7 +61,18 @@ void object_setup() {
 	//objects[3] = triangle1;
 }
 
-Camera* world_setup(){
+void object_teardown() {
+    for (int i = 0; i < NUM_OBJECTS; i++) {
+        delete objects[i];
+    }
+}
+
+void world_teardown(Camera *camera) {
+    object_teardown();
+    delete camera;
+}
+
+Camera* world_setup() {
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera *camp = new Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
@@ -73,19 +81,13 @@ Camera* world_setup(){
     return camp;
 }
 
-void trace_ray(Ray *ray, Pixel *pixel, int reflections){
+void trace_ray(Ray *ray, Pixel &pixel, int reflections){
     if (reflections > MAX_REFLECTIONS){
         return;
     }
     else {
         reflections++;
     }
-
-    mat4 tr = mat4(1.0);
-    tr = Transform::translate(0.0, 4.0, -20.0);
-    Sphere sp2 = Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
-    Object *sphere2 = &sp2;
-	objects[0] = sphere2;
 
     for (int k = 0; k < NUM_OBJECTS; k++) {
 	    float dist1 = INFINITY;
@@ -95,15 +97,16 @@ void trace_ray(Ray *ray, Pixel *pixel, int reflections){
 		vec3 n = vec3(0.0);
 
 		Object* obj = objects[k];
+
         if (obj->intersects(*ray, hit, n, dist1, dist2)) {
             HIT_COUNT++;
             if (dist1 < nearest) {
                 nearest = dist1;
                 if (ray->type == RayType::camera) {
-                    pixel->set_color(obj->color);
+                    pixel.set_color(obj->color);
                 }
                 else {
-                    pixel->add_alpha_color(obj->color);
+                    pixel.add_alpha_color(obj->color);
                 }
             }
             //vec3 dir = Transform::reflect(ray.direction, n);
@@ -113,19 +116,13 @@ void trace_ray(Ray *ray, Pixel *pixel, int reflections){
     }
 }
 
-void tracer() {
-    mat4 matv = mat4(1.0);
-    mat4 *matp = &matv;
-
-    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-    Camera *camera = &cam;
-
+void tracer(Camera *camera) {
     FreeImage_Initialise();
     FIBITMAP* bitmap = FreeImage_Allocate(camera->width, camera->height, camera->bpp);
     RGBQUAD color;
 
     for (int i = 0; i < camera->width; i++) {
-		for (int j = 0; j < camera->height; j++) {
+	    for (int j = 0; j < camera->height; j++) {
 			//base color
             color.rgbRed = 0.0;
 	        color.rgbGreen = 0.0;
@@ -142,8 +139,8 @@ void tracer() {
 
 			//initial camera ray
             int reflections = 0;
-            Ray ray = Ray(origin, direction, RayType::camera);
-            trace_ray(&ray, &pixel, reflections);
+            Ray *ray = new Ray(origin, direction, RayType::camera);
+            trace_ray(ray, pixel, reflections);
 
             //draw pixel
             vec3 rgb_color = pixel.convert_rgba_to_rgb(vec4(1.0));
@@ -152,6 +149,8 @@ void tracer() {
 		    color.rgbGreen = (double)(rgb_color.g * 255.0);
 			color.rgbBlue = (double)(rgb_color.b * 255.0);
 			FreeImage_SetPixelColor(bitmap, i, camera->height-j, &color);
+
+            delete ray;
         }
     }
     if (FreeImage_Save(FIF_PNG, bitmap, "./test/test.png", 0)) {
@@ -334,9 +333,12 @@ int main(int argc, char* argv[]) {
     getchar();
     //system("pause");
     */
-    //Camera *camp = world_setup();
-    tracer();
-    cout << "hits " << HIT_COUNT << " total " << (640 * 480) << endl;
+    //test_setup();
+
+    Camera *camp = world_setup();
+    tracer(camp);
+    world_teardown(camp);
+    cout << endl << "hits " << HIT_COUNT << " total " << (640 * 480) << endl;
     printf("Hit any key to continue> ");
     getchar();
 

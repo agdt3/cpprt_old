@@ -16,4 +16,11 @@ public:
     Camera(mat4*, float, float, float, float, vec3);
 };
 
+// toString representation of camera
+inline
+std::ostream & operator<< (std::ostream &stream, Camera const &c){
+    stream << "camera origin " << c.origin << " width " << c.width << " height " << c.height << std::endl;
+    return stream;
+}
+
 #endif

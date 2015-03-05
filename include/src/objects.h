@@ -68,14 +68,13 @@ public:
 	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
 
-/*
 class Polygon : public Object {
 public:
 	int num_faces; // number of faces
 	int num_vertices_per_face[]; //number of verticies for each face
 	int vertex_indecies[]; // vertex indecies the form up each
-	vec4 verticies[]; 
-};*/
+	vec4 verticies[];
+};
 
 #endif
 
