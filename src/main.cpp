@@ -17,7 +17,7 @@ using namespace std;
 
 //global
 int HIT_COUNT = 0;
-const int NUM_OBJECTS = 1;
+const int NUM_OBJECTS = 3;
 const int MAX_REFLECTIONS = 1;
 Object* objects[NUM_OBJECTS];
 
@@ -47,7 +47,7 @@ void object_setup() {
     //Object *sphere1 = &sp1;
     Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
 
-    tr = Transform::translate(0.0, 1.0, -20.0);
+    tr = Transform::translate(-2.5, 1.0, -20.0);
     Sphere *sphere2 = new Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
 
     Triangle *triangle1 = new Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
@@ -55,8 +55,8 @@ void object_setup() {
     Plane *plane1 = new Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
 
 	objects[0] = sphere1;
-    //objects[1] = light1;
-    //objects[2] = sphere2;
+    objects[1] = light1;
+    objects[2] = sphere2;
 	//objects[2] = plane1;
 	//objects[3] = triangle1;
 }
@@ -88,11 +88,11 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections){
     else {
         reflections++;
     }
+    float nearest = INFINITY;
 
     for (int k = 0; k < NUM_OBJECTS; k++) {
 	    float dist1 = INFINITY;
 		float dist2 = INFINITY;
-	    float nearest = INFINITY;
         vec3 hit = vec3(0.0);
 		vec3 n = vec3(0.0);
 

@@ -67,7 +67,7 @@ public:
 	Plane(vec3 A, vec3 B, vec3 C, vec4 col);
 	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
 };
-
+/*
 class Polygon : public Object {
 public:
 	int num_faces; // number of faces
@@ -75,6 +75,6 @@ public:
 	int vertex_indecies[]; // vertex indecies the form up each
 	vec4 verticies[];
 };
-
+*/
 #endif
 
