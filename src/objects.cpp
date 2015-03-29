@@ -28,11 +28,13 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
     int method = 1;
     if (method == 1) {
         vec3 SC = vec3(center.x, center.y, center.z); //ignore w here for now
-	    float SR2 = radius * radius;
+        vec3 RD = glm::normalize(ray.direction); //should always be a normal
+        float SR2 = radius * radius;
         vec3 OC = SC - ray.origin;
         float L2OC = glm::dot(OC, OC);
-        vec3 RD = glm::normalize(ray.direction); //should always be a normal
+
         float t_ca = glm::dot(OC, RD);
+        //sphere located behind ray origin
         if(t_ca < 0) return false;
 
 	    float D2 = L2OC - pow(t_ca, 2);
@@ -49,6 +51,15 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
 
 	    float T2HC = SR2 - D2;
         if (T2HC < 0) return false;
+
+        //if the origin is inside the sphere of light, it counts as a hit
+        if (L2OC < SR2) {
+            t0 = 0.0;
+            t1 = NULL; //TODO: Figure this out
+            hit = ray.origin;
+            n = (float)-1.0 * OC;
+            return true;
+        }
 
         float THC = sqrt(T2HC);
         t0 = t_ca - THC; //distance to point of impact
@@ -91,55 +102,7 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
             return false;
         }
     }
-    else if (method == 3) {
-        vec3 center3 = vec3(center.x, center.y, center.z);
-        vec3 L = ray.origin - center3;
-
-        float b = glm::dot(ray.direction, L);
-        float r1, r2;
-
-        float det = (b * b) - (glm::dot(L, L)) + (radius * radius);
-        bool hits = false;
-        if (det < 0) return false;
-        else if (det == 0) {
-            r1 = r2 = -b + sqrt(det);
-            hits = true;
-        }
-        else if (det > 0) {
-            r1 = -b + sqrt(det);
-            r2 = -b - sqrt(det);
-
-            //std::cout << r1 << " " << r2 << std::endl;
-            hits = true;
-
-            if ((r1 < 0 && r2 < 0) || (r1 > 0 && r2 < 0) || (r2 > 0 && r1 < 0)) {
-                //if r1 > 0 and r2 < 0, point is inside sphere
-                //if r1 <0 && r2 <0, point is in fron of sphere or on some
-                //other weird state
-                // only r1 > 0 and r2 > 0 qualifies
-                return false;
-            }
-        }
-
-        // Are r1/r2 supposed to be abs b/c of distance, not roots
-        //r1 should be the smaller of the two distances
-        if (glm::abs(r1) > glm::abs(r2)) std::swap(r1, r2);
-
-        if (hits) {
-            t0 = r1;
-            t1 = r2;
-
-            float dist = easing_distance * abs(r1);
-            hit = ray.origin + (dist * ray.direction);
-
-            n = (hit - center3) / radius;
-
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
+    return false;
 }
 
 Light::Light(float r, mat4 *otw, vec4 col, float ease_dist=1.0, LightType l_type=LightType::point) : Object(otw, col, ease_dist) {
@@ -235,110 +198,8 @@ bool Light::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t1
                 return false;
             }
         }
-        else if (method == 3) {
-            //analytic solution
-
-            //method 3 math
-            /**
-                ray.origin = (0,0,0)
-                norm dir = (0, 1, -1) / sqrt(2)
-                ray.direction = (0, 0.707, -0.707)
-                sphere.center = (0, 3, -3)
-                sphere.radius = 1
-                L = (0, -3, 3)
-                b = 0 -2.121 - 2.121 = -4.242
-                det = 18 - 18 + 1 = 1
-                det > 0
-                r1 = -(-2.121) + det = 2.121 + 1 = 3.121
-                r2 = -(-2.121) - det = 2.121 - 1 = 1.121
-
-                //opposite
-                ray.origin = (0,0,0)
-                norm dir = (0, -1, -1) / sqrt(2)
-                ray.direction = (0, -0.707, -0.707)
-                sphere.center = (0, 3, -3)
-                sphere.radius = 1
-                L = (0, -3, 3)
-                b = 0 + 2.121 - 2.121 = 0
-                det = 0 * 0 - 18 + 1 = -17;
-                det < 0; No hit!
-                this method is a bit screwed up because it returns
-                non-sensical roots
-                note: recalculate distance somehow?
-
-                ray.origin = (0, 0, -10)
-                ray.direction = (0, -1, 0)
-                sphere.center = (0, 3, -10)
-                sphere.radius = 1
-                L = (0, -3, 0)
-                b = 0 + 3 + 0 = 3
-                det = 9 - 9 + 1
-                det > 0 so it's a hit even though it shouldn't be!
-
-
-                ray.origin = (0, 0, 0)
-                ray.direction = (0, -1, 0)
-                sphere.center = (0, 3, 0)
-                sphere.radius = 1
-                L = (0, -3, 0)
-                b = 3
-                det = 9 - 9 + 1 = 1
-                r1 = -3 + sqrt(1) = -2
-                r2 = -3 - sqrt(1) = -4
-                //No hit, as it should be
-
-            */
-
-            vec3 center3 = vec3(center.x, center.y, center.z);
-            vec3 L = ray.origin - center3;
-
-            float b = glm::dot(ray.direction, L);
-            float r1, r2;
-
-            float det = (b * b) - (glm::dot(L, L)) + (radius * radius);
-            bool hits = false;
-            if (det < 0) return false;
-            else if (det == 0) {
-                r1 = r2 = -b + sqrt(det);
-                hits = true;
-            }
-            else if (det > 0) {
-                r1 = -b + sqrt(det);
-                r2 = -b - sqrt(det);
-
-                //std::cout << r1 << " " << r2 << std::endl;
-                hits = true;
-
-                if ((r1 < 0 && r2 < 0) || (r1 > 0 && r2 < 0) || (r2 > 0 && r1 < 0)) {
-                    //if r1 > 0 and r2 < 0, point is inside sphere
-                    //if r1 <0 && r2 <0, point is in fron of sphere or on some
-                    //other weird state
-                    // only r1 > 0 and r2 > 0 qualifies
-                    return false;
-                }
-            }
-
-            // Are r1/r2 supposed to be abs b/c of distance, not roots
-            //r1 should be the smaller of the two distances
-            if (glm::abs(r1) > glm::abs(r2)) std::swap(r1, r2);
-
-            if (hits) {
-                t0 = r1;
-                t1 = r2;
-
-                float dist = easing_distance * abs(r1);
-                hit = ray.origin + (dist * ray.direction);
-
-                n = (hit - center3) / radius;
-
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-
     }
+    return false;
 }
 
 Triangle::Triangle(vec3 A, vec3 B, vec3 C, vec4 col) {

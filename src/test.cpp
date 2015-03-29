@@ -12,7 +12,7 @@ TEST(remapPixel, remapsCorrectlyUnderFOVX90) {
 
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 90.0, NULL, vec3(0.0));
+    Camera cam = Camera(matp, 640, 480, 90.0, 45.0, vec3(0.0));
     Camera *camp = &cam;
 
     float TOLERANCE = 0.003;
@@ -313,7 +313,6 @@ TEST(Light, intersectionToSphereCanBeBlockedByOwnSphereObject) {
 
     vec3 hit, light_hit, n, light_n;
     float dist1, dist2, light_dist1, light_dist2;
-    float TOLERANCE = 0.01;
 
     vec3 origin = vec3(0.0);
     vec3 direction = vec3(0.0, 1.0, -1.0);
@@ -446,14 +445,12 @@ TEST(LightIntersection, oppositeDirectionDoesNotHit) {
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-    Camera *camp = &cam;
 
     mat4 trl = Transform::translate(0.0, 3.0, -10.0);
     Light lg1 = Light(1.0, &trl, vec4(0.0, 0.0, 0.0, 1.0), 1.0, LightType::point);
 
     vec3 light_hit, light_n;
     float light_dist1, light_dist2;
-    float TOLERANCE = 0.01;
 
     vec3 sh_origin = vec3(0.0, 0.0, -10.0);
     vec3 sh_direction = vec3(0.0, -1.0, 0.0);
