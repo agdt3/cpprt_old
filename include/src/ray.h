@@ -17,7 +17,7 @@ public:
 // toString representation of ray
 inline
 std::ostream & operator<< (std::ostream &stream, Ray const &r){
-    stream << "ray origin (" << r.origin << ") ray dir (" << r.direction << ")" << std::endl;
+    stream << "ray type " << (int)r.type << std::endl << "ray origin (" << r.origin << ")" << std::endl << "ray dir (" << r.direction << ")" << std::endl;
     return stream;
 }
 #endif

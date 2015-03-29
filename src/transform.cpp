@@ -62,7 +62,7 @@ void Transform::up(float degrees, vec3& eye, vec3& up) {
   //but this changes depedning on the position of the up and eye vectors
   //normalized (i.e. made a unit vector) for rotation purposes
   //vec3 newup = upvector(up, eye);
-  
+
   vec3 axis = glm::normalize(glm::cross(eye, up)); //normalized normal to up and eye
   //printf("UP axis %.2f, %.2f, %.2f\n", axis.x, axis.y, axis.z); 
   mat3 rot = rotate(degrees, axis);
@@ -150,29 +150,34 @@ vec3 Transform::upvector(const vec3 &up, const vec3 & zvec)
 bool Transform::solve_quadratic(float a, float b, float c, float &r1, float &r2) {
     //ax^2 + bx + c = 0
     //x = (-b +/- sqrt(b^2 - 4ac)) / 2a
-    
+
     float discriminant = b * b - 4 * a * c;
-    
+
     //complex root - no intersection
     if (discriminant < 0) return false;
+
     else if (discriminant == 0) {
-        r1 = r2 = -0.5 * b / a; 
+        r1 = r2 = -0.5 * b / a;
+        return true;
     }
     else {
         float q = (b > 0) ? -0.5 * (b + sqrt(discriminant)) : -0.5 * (b - sqrt(discriminant));
         r1 = q / a;
         r2 = c / q;
     }
+    //r1 = (-b + sqrt(discriminant) / 2 * a);
+    //r2 = (-b - sqrt(discriminant) / 2 * a);
+
     //equal is a tangent
     //instead of r1 == r2 for floats, use epsilon difference comparison
-    float epsilon = 0.001;
+    float epsilon = 0.0001;
     if (abs(r1 - r2) < epsilon) return false;
     else if ((r1 > 0 && r2 < 0) || (r2 > 0 && r1 < 0)) {
-        // one > 0, one < 0 - ray is inside sphere
+        //one > 0, one < 0 - ray is inside sphere
         return false;
     }
 
-    if (r1 > r2) std::swap(r2, r1);
+    if (r1 > r2) std::swap(r1, r2);
     return true;
 }
 

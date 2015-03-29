@@ -16,9 +16,12 @@
 using namespace std;
 
 //global
+const bool RUN_TEST = true;
 int HIT_COUNT = 0;
-const int NUM_OBJECTS = 3;
-const int MAX_REFLECTIONS = 1;
+int LIGHT_HIT_COUNT = 0;
+const bool LIGHT_VISIBLE = true;
+const int NUM_OBJECTS = 2;
+const int MAX_REFLECTIONS = 2;
 Object* objects[NUM_OBJECTS];
 
 /*
@@ -35,29 +38,28 @@ void init_objects() {
 }*/
 
 void object_setup() {
-    mat4 tr = Transform::translate(0.0, 4.0, -18.0);
+    mat4 tr = Transform::translate(0.0, 3.0, -8.0);
     Light *light1 = new Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
 
 	mat4 world = mat4(1.0);
-	tr = Transform::translate(0.0, 1.0, -15.0);
+	tr = Transform::translate(0.0, 0.0, -10.0);
 	mat4 final = world * tr;
 
-	//some local objects
-    //Sphere sp1 = Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
-    //Object *sphere1 = &sp1;
-    Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
+    Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.99);
 
+/*
     tr = Transform::translate(-2.5, 1.0, -20.0);
     Sphere *sphere2 = new Sphere(2.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
 
     Triangle *triangle1 = new Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
 
     Plane *plane1 = new Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
+*/
 
 	objects[0] = sphere1;
     objects[1] = light1;
-    objects[2] = sphere2;
-	//objects[2] = plane1;
+    //objects[2] = sphere2;
+	//objects[3] = plane1;
 	//objects[3] = triangle1;
 }
 
@@ -75,43 +77,77 @@ void world_teardown(Camera *camera) {
 Camera* world_setup() {
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
-    Camera *camp = new Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    Camera *camp = new Camera(matp, 1024, 768, 45.0, 45.0, vec3(0.0));
 
     object_setup();
     return camp;
 }
 
-void trace_ray(Ray *ray, Pixel &pixel, int reflections){
-    if (reflections > MAX_REFLECTIONS){
+struct Hit {
+    bool is_hit = false;
+    vec3 hit, n;
+    float d1, d2;
+    ObjType type;
+    vec4 color;
+};
+
+void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
+{
+    if (reflections >= MAX_REFLECTIONS) {
         return;
     }
     else {
         reflections++;
     }
+
+    if (track) {
+        cout << *ray << endl;
+    }
+
     float nearest = INFINITY;
+    float dist1, dist2;
+    vec3 hit, n;
+    Hit hit_result = Hit();
 
     for (int k = 0; k < NUM_OBJECTS; k++) {
-	    float dist1 = INFINITY;
-		float dist2 = INFINITY;
-        vec3 hit = vec3(0.0);
-		vec3 n = vec3(0.0);
-
-		Object* obj = objects[k];
-
+	    Object* obj = objects[k];
         if (obj->intersects(*ray, hit, n, dist1, dist2)) {
-            HIT_COUNT++;
-            if (dist1 < nearest) {
-                nearest = dist1;
-                if (ray->type == RayType::camera) {
-                    pixel.set_color(obj->color);
-                }
-                else {
-                    pixel.add_alpha_color(obj->color);
-                }
+            if (abs(dist1) < nearest) {
+                //store results of hit here - probably should use a struct
+                HIT_COUNT++;
+                nearest = abs(dist1);
+                hit_result.is_hit = true;
+                hit_result.hit = hit;
+                hit_result.n = n;
+                hit_result.d1 = dist1;
+                hit_result.d2 = dist2;
+                hit_result.type = obj->type;
+                hit_result.color = obj->color;
             }
-            //vec3 dir = Transform::reflect(ray.direction, n);
-			//Ray nray = Ray(hit, dir, RayType::shadow);
-            //trace_ray(nray, pixel, reflections);
+        }
+    }
+
+    if (hit_result.is_hit) {
+        if (ray->type == RayType::camera) {
+            if (hit_result.type == ObjType::light && LIGHT_VISIBLE) {
+                pixel.set_color(hit_result.color);
+            }
+            else if (hit_result.type != ObjType::light) {
+                pixel.set_color(hit_result.color);
+
+                //fire a new ray
+                vec3 dir = (Transform::reflect(ray->direction, n));
+                dir = glm::normalize(dir);
+                Ray *nray = new Ray(hit, dir, RayType::shadow);
+                trace_ray(nray, pixel, reflections, track);
+                delete nray;
+            }
+        }
+        else if (ray->type == RayType::shadow) {
+            if (hit_result.type == ObjType::light) {
+                LIGHT_HIT_COUNT++;
+                pixel.add_alpha_color(hit_result.color);
+            }
         }
     }
 }
@@ -140,7 +176,12 @@ void tracer(Camera *camera) {
 			//initial camera ray
             int reflections = 0;
             Ray *ray = new Ray(origin, direction, RayType::camera);
-            trace_ray(ray, pixel, reflections);
+
+            bool track = false;
+            if (i == (int)(camera->width/2) && j == 305) {
+                track = true;
+            }
+            trace_ray(ray, pixel, reflections, track);
 
             //draw pixel
             vec3 rgb_color = pixel.convert_rgba_to_rgb(vec4(1.0));
@@ -151,6 +192,7 @@ void tracer(Camera *camera) {
 			FreeImage_SetPixelColor(bitmap, i, camera->height-j, &color);
 
             delete ray;
+            //delete pixel;
         }
     }
     if (FreeImage_Save(FIF_PNG, bitmap, "./test/test.png", 0)) {
@@ -328,20 +370,20 @@ int main(int argc, char* argv[]) {
 		cout << "Saved!";
 	}
 	FreeImage_DeInitialise();
-
-    printf("Hit any key to continue> ");
-    getchar();
-    //system("pause");
     */
-    //test_setup();
-
     Camera *camp = world_setup();
     tracer(camp);
     world_teardown(camp);
-    cout << endl << "hits " << HIT_COUNT << " total " << (640 * 480) << endl;
+    cout << endl << "hits " << HIT_COUNT << " total " << (camp->width * camp->height) << endl;
+    cout << "light hits " << LIGHT_HIT_COUNT << endl;
+
     printf("Hit any key to continue> ");
     getchar();
 
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    if (RUN_TEST) {
+        ::testing::InitGoogleTest(&argc, argv);
+        return RUN_ALL_TESTS();
+    } else {
+        return 0;
+    }
 }

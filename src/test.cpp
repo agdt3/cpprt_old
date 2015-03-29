@@ -12,7 +12,7 @@ TEST(remapPixel, remapsCorrectlyUnderFOVX90) {
 
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 90.0, 45.0, vec3(0.0));
+    Camera cam = Camera(matp, 640, 480, 90.0, NULL, vec3(0.0));
     Camera *camp = &cam;
 
     float TOLERANCE = 0.003;
@@ -135,7 +135,6 @@ TEST(Sphere, intersectionSingleAxis) {
     float dist1, dist2;
     bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
-    //don't forget distance easing
     float TOLERANCE = 0.0001;
     EXPECT_EQ(is_hit, true);
     EXPECT_NEAR(dist1, 2, TOLERANCE);
@@ -150,35 +149,36 @@ TEST(Sphere, intersectionSingleAxis) {
     EXPECT_EQ(n.z, 1.0);
 }
 
-TEST(sphere, intersectionDoubleAxisAtAngle) {
+TEST(Sphere, intersectionDoubleAxisAtAngle) {
     mat4 tr = Transform::translate(0.0, 2.0, -3.0);
     Sphere sp1 = Sphere(1.0, &tr, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
 
     vec3 origin = vec3(0.0);
-    vec3 direction = vec3(0.0, 1.0, -1.0);
+    vec3 direction = glm::normalize(vec3(0.0, 1.0, -1.0));
     Ray ray = Ray(origin, direction, RayType::camera);
     Ray *rayp = &ray;
 
-    vec3 hit, n;
+    vec3 hit = vec3(0.0);
+    vec3 n = vec3(0.0);
     float dist1, dist2;
     bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
 
-    float TOLERANCE = 0.0001;
+    float TOLERANCE = 0.001;
     EXPECT_EQ(is_hit, true);
-    EXPECT_NEAR(dist1, 2.0, TOLERANCE);
-    EXPECT_NEAR(dist2, 3.0, TOLERANCE); //not sure how this happens since diameter is 4
+    //impact is at 2 * sqrt(2) = 2.83
+    EXPECT_NEAR(dist1, 2.828, TOLERANCE); //tca - thc
+    EXPECT_NEAR(dist2, 4.243, TOLERANCE); //tca + thc
 
-    EXPECT_EQ(hit.x, 0.0);
-    EXPECT_EQ(hit.y, 2.0);
-    EXPECT_EQ(hit.z, -2.0);
+    EXPECT_NEAR(hit.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(hit.y, 2.0, TOLERANCE);
+    EXPECT_NEAR(hit.z, -2.0, TOLERANCE);
 
-    EXPECT_EQ(n.x, 0.0);
-    EXPECT_EQ(n.y, 0.0);
-    EXPECT_EQ(n.z, 1.0);
+    EXPECT_NEAR(n.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(n.y, 0.0, TOLERANCE);
+    EXPECT_NEAR(n.z, 1.0, TOLERANCE);
 }
 
-
-TEST(sphere, intersectionDoubleAxis) {
+TEST(Sphere, intersectionDoubleAxis) {
     mat4 tr = Transform::translate(0.0, 3.0, -3.0);
     Sphere sp1 = Sphere(1.0, &tr, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
 
@@ -193,9 +193,9 @@ TEST(sphere, intersectionDoubleAxis) {
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
-    EXPECT_NEAR(dist1, 2.29, TOLERANCE); //curvature of sphere means it's a bit further away
-    EXPECT_NEAR(dist2, 3.7, TOLERANCE); //should be 4.29 - not sure why this is
-    //diff is 1.4 or r = 0.7, not r = 1.0
+    // 2 * sqrt(2) + curvature
+    EXPECT_NEAR(dist1, 3.24, TOLERANCE); //curvature of sphere means it's a bit further away
+    EXPECT_NEAR(dist2, 5.24, TOLERANCE); //diameter = 2 and ray passes through center
 
     EXPECT_NEAR(hit.x, 0.0, TOLERANCE);
     EXPECT_NEAR(hit.y, 2.29, TOLERANCE);
@@ -222,8 +222,9 @@ TEST(Sphere, intersectionTripleAxis) {
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
-    EXPECT_NEAR(dist1, 2.42, TOLERANCE); //curvature of sphere means it's a bit further away
-    EXPECT_NEAR(dist2, 3.57, TOLERANCE); //this really screws with my understanding of radius
+    //impact is at least 2 * sqrt(2) = 2.83 + curvature
+    EXPECT_NEAR(dist1, 4.196, TOLERANCE);
+    EXPECT_NEAR(dist2, 6.196, TOLERANCE);
 
     EXPECT_NEAR(hit.x, 2.42, TOLERANCE);
     EXPECT_NEAR(hit.y, 2.42, TOLERANCE);
@@ -250,8 +251,8 @@ TEST(Light, intersectionTripleAxis) {
 
     float TOLERANCE = 0.01;
     EXPECT_EQ(is_hit, true);
-    EXPECT_NEAR(dist1, 2.42, TOLERANCE);
-    EXPECT_NEAR(dist2, 3.57, TOLERANCE);
+    EXPECT_NEAR(dist1, 4.196, TOLERANCE);
+    EXPECT_NEAR(dist2, 6.196, TOLERANCE);
 
     EXPECT_NEAR(hit.x, 2.42, TOLERANCE);
     EXPECT_NEAR(hit.y, 2.42, TOLERANCE);
@@ -290,8 +291,8 @@ TEST(Light, canBeIntersectedByReflectedShadowRay) {
     bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
 
     EXPECT_EQ(light_is_hit, true);
-    EXPECT_NEAR(light_dist1, 1.0, TOLERANCE);
-    EXPECT_NEAR(light_dist2, 2.0, TOLERANCE); //what the heck is this distance?
+    EXPECT_NEAR(light_dist1, 1.414, TOLERANCE);
+    EXPECT_NEAR(light_dist2, 2.828, TOLERANCE);
 
     EXPECT_NEAR(light_hit.x, 0.0, TOLERANCE);
     EXPECT_NEAR(light_hit.y, 3.0, TOLERANCE);
@@ -360,7 +361,7 @@ TEST(Pixel, createsCorrectDirectionVector) {
     EXPECT_NEAR(direction.z, -1.0, TOLERANCE);
 }
 
-TEST(Pixel, createsCorrectReflectionVector) {
+TEST(Pixel, createsCorrectAcuteReflectionVector) {
     mat4 matv = mat4(1.0);
     mat4 *matp = &matv;
     Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
@@ -394,10 +395,71 @@ TEST(Pixel, createsCorrectReflectionVector) {
     vec3 sh_direction = Transform::reflect(direction, n);
     Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
     Ray *shadow_rayp = &shadow_ray;
-    //std::cout << "dir " << direction << std::endl;
-    //std::cout << "n " << n << std::endl;
-    //std::cout << "shadow dir " << sh_direction << std::endl;
 
     bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
     EXPECT_EQ(light_is_hit, true);
+}
+
+TEST(Pixel, createsCorrectObtuseReflectionVector) {
+    mat4 matv = mat4(1.0);
+    mat4 *matp = &matv;
+    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    Camera *camp = &cam;
+
+    Pixel pix = Pixel(320.0, 75.0, camp); //should be near (0,1)
+    pix.remap();
+
+    mat4 trsp = Transform::translate(0.0, 0.0, -3.0);
+    Sphere sp1 = Sphere(1.0, &trsp, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+
+    mat4 trl = Transform::translate(0.0, 3.0, -3.0);
+    Light lg1 = Light(1.0, &trl, vec4(0.0, 0.0, 0.0, 1.0), 1.0, LightType::point);
+
+    vec3 hit, light_hit, n, light_n;
+    float dist1, dist2, light_dist1, light_dist2;
+    float TOLERANCE = 0.01;
+
+    vec3 origin = vec3(0.0);
+    vec3 direction = glm::normalize(vec3(pix.x, pix.y, -1.0));
+    Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
+
+    bool is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, true);
+    EXPECT_NEAR(direction.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(direction.y, 0.273, TOLERANCE);
+    EXPECT_NEAR(direction.z, -0.97, TOLERANCE);
+
+    vec3 sh_origin = hit;
+    vec3 sh_direction = glm::normalize(Transform::reflect(direction, n));
+    Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
+    Ray *shadow_rayp = &shadow_ray;
+    EXPECT_NEAR(sh_direction.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(sh_direction.y, 0.99, TOLERANCE);
+    EXPECT_NEAR(sh_direction.z, -0.073, TOLERANCE);
+
+    bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
+    EXPECT_EQ(light_is_hit, true);
+}
+
+TEST(LightIntersection, oppositeDirectionDoesNotHit) {
+    mat4 matv = mat4(1.0);
+    mat4 *matp = &matv;
+    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
+    Camera *camp = &cam;
+
+    mat4 trl = Transform::translate(0.0, 3.0, -10.0);
+    Light lg1 = Light(1.0, &trl, vec4(0.0, 0.0, 0.0, 1.0), 1.0, LightType::point);
+
+    vec3 light_hit, light_n;
+    float light_dist1, light_dist2;
+    float TOLERANCE = 0.01;
+
+    vec3 sh_origin = vec3(0.0, 0.0, -10.0);
+    vec3 sh_direction = vec3(0.0, -1.0, 0.0);
+    Ray shadow_ray = Ray(sh_origin, sh_direction, RayType::shadow);
+    Ray *shadow_rayp = &shadow_ray;
+
+    bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
+    EXPECT_EQ(light_is_hit, false);
 }

@@ -47,14 +47,14 @@ public:
 // toString representation of vec3
 inline
 std::ostream & operator<< (std::ostream &stream, vec3 const &v){
-    stream << "x " << v.x << " y " << v.y << " z " << v.z << std::endl;
+    stream << "x " << v.x << " y " << v.y << " z " << v.z;
     return stream;
 }
 
 // toString representation of vec4
 inline
 std::ostream & operator<< (std::ostream &stream, vec4 const &v){
-    stream << "x " << v.x << " y " << v.y << " z " << v.z << " w " << v.w << std::endl;
+    stream << "x " << v.x << " y " << v.y << " z " << v.z << " w " << v.w;
     return stream;
 }
 
