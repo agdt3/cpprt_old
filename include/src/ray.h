@@ -5,12 +5,17 @@
 #ifndef RAY_H
 #define RAY_H
 
-class Ray {
+class Ray
+{
 public:
-	vec3 origin, direction;
+    static int id_generator;
+    int id;
+    vec3 origin, direction;
 	RayType type;
 
-	Ray(vec3 orig, vec3 dir, RayType rt);
+	Ray(vec3, vec3, RayType);
+	Ray(vec3, vec3, RayType, int); //id constructor for testing
+    Ray(const Ray&); //copy which sets new id
 	vec3 operator() (const float &t);
 };
 

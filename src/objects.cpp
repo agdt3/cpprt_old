@@ -3,13 +3,27 @@
 #include "src/transform.h"
 #include <iostream>
 
+//static member definition
+int Object::id_generator = 0;
+
 Object::Object() {
-	objectToWorld = mat4(1.0);
+    id = id_generator++;
+    objectToWorld = mat4(1.0);
 	worldToObject = glm::inverse(objectToWorld);
 	color = vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 Object::Object(mat4 *otw, vec4 col, float ease_dist=1.0) {
+    id = id_generator++;
+    objectToWorld = *otw;
+    worldToObject = glm::inverse(objectToWorld);
+    color = col;
+    easing_distance = ease_dist;
+}
+
+//testing constructor with set id
+Object::Object(mat4 *otw, vec4 col, float ease_dist, int new_id) {
+    id = new_id;
     objectToWorld = *otw;
     worldToObject = glm::inverse(objectToWorld);
     color = col;
@@ -22,6 +36,24 @@ Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist) : Object(otw, col,
 	center =  objectToWorld * vec4(0.0, 0.0, 0.0, 1.0);
     //std::cout << "s" << center.x << " " << center.y << " " << center.z << std::endl;
 	radius = r; //define the radius explicitely, not as part of a transform, although really should
+}
+
+//testing constructor with id
+Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist, int new_id) : Object(otw, col, ease_dist, new_id) {
+	type = ObjType::sphere;
+	center =  objectToWorld * vec4(0.0, 0.0, 0.0, 1.0);
+	radius = r;
+}
+
+//copy constructor
+Sphere::Sphere(const Sphere& source) {
+    color = source.color;
+    objectToWorld = source.objectToWorld;
+    easing_distance = source.easing_distance;
+
+    type = source.type;
+    center = source.center;
+    radius = source.radius;
 }
 
 bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t1) {
@@ -251,41 +283,82 @@ bool Triangle::intersects (const Ray &ray, vec3 &hit, vec3 &n_vec, float &t0, fl
 	return false;
 };
 
-Plane::Plane(vec3 A, vec3 B, vec3 C, vec4 col){
-    // these are more like 3 points in a plane you want to define
-    // since any 3 points define a plane!
-    v0 = A;
-    v1 = B;
-    v2 = C;
-    n = glm::cross((v1 - v0), (v2 - v0));
-    std::cout << "n x " << n.x << " y " << n.y << " z " << n.z << std::endl;
-	color = col;
-	type = ObjType::plane;
+Plane::Plane(vec3 n_vec, float dist, vec4 col, float ease_dist) {
+    D = dist;
+    n = n_vec;
+    color = col;
+    easing_distance = ease_dist;
+    type = ObjType::plane;
 }
 
 bool Plane::intersects (const Ray &ray, vec3 &hit, vec3 &n_vec, float &t0, float &t1) {
-	//first test if ray intersects the plane in whicht the triangle lives
-	vec3 p1 = ray.origin;
-	vec3 p0 = ray.direction;
+    vec3 rd = glm::normalize(ray.direction);
+    float vd = glm::dot(n, rd);
 
-	float denominator = glm::dot(n, p1 - p0);
-	if (denominator == 0) {
-		return false; //ray is in plane or parallel to plane
-	}
-	float nominator = glm::dot(n, v0 - p0);
-	float dist = nominator / denominator;
+    // ray direction and plane n are perpendicular
+    // therefore ray is parallel to plane
+    if (vd == 0) return false;
 
-	if (dist < 0) {
-        //std::cout << "r.o " << p0 << std::endl;
-        //std::cout << "r.d " << p1 << std::endl;
-		t0 = abs(dist);
-		//float eased_dist = dist * 0.95;
-		float eased_dist = glm::abs(dist) * 0.99;
-		hit = p0 + eased_dist * (p1 - p0);
-        n_vec = n;
-		return  true;
-	}
+    float v0 = -1.0 * (glm::dot(n, ray.origin) + D);
 
-	return false;
-};
+    float t = v0 / vd;
 
+    //plane is behind point of origin, ignore
+    if (t < 0) return false;
+
+    t0 = t1 = t;
+    float dist = easing_distance * glm::abs(t);
+    hit = ray.origin + (dist * rd);
+    n_vec = n;
+
+    return true;
+}
+
+/*
+void Plane::project_to_uv (std::vector<vec3> points) {
+    float x = glm::abs(n.x);
+    float y = glm::abs(n.y);
+    float z = glm::abs(n.z);
+    int discard;
+
+    for (int i = 0; i < 3; ++i) {
+        //
+    }
+
+
+    discard = max(max(x, y), z);
+
+    if ((x == y && y == z) || (x == y && y > z) || (x == z && z > y)) {
+        discard = 0;
+    }
+    else if (y == z && z > x) {
+        discard = 1;
+    }
+    else if (x > y) {
+        if (x > z) {
+            discard = 0;
+        } else {
+            discard = 2;
+        }
+    }
+    else if (y > z) {
+        discard = 1;
+    } else {
+        discard = 2;
+    }
+
+    std::vector<vec3> remapped_points;
+    for (int i = 0; i < points.size(); ++i) {
+        vec3 v = points[i];
+        remapped_points.pushback(points[i]);
+    }
+}
+
+void Plane::derive_formula (const Ray &ray, vec3 aPoint) {
+    //first hit calculates the intrinsic plane formula
+    if (A != NULL && B != NULL && C != NULL) return;
+
+    A = "";
+    B = "";
+    C = "";
+}*/

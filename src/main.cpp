@@ -19,7 +19,7 @@ using namespace std;
 const bool RUN_TEST = true;
 int HIT_COUNT = 0;
 int LIGHT_HIT_COUNT = 0;
-const bool LIGHT_VISIBLE = true;
+const bool LIGHT_VISIBLE = false;
 const int NUM_OBJECTS = 3;
 const int MAX_REFLECTIONS = 2;
 Object* objects[NUM_OBJECTS];
@@ -43,24 +43,24 @@ void object_setup()
     Light *light1 = new Light(2.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
 
 	mat4 world = mat4(1.0);
-	tr = Transform::translate(0.0, 0.0, -15.0);
+	tr = Transform::translate(0.0, -0.85, -15.0);
 	mat4 final = world * tr;
-
     Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
 
-    tr = Transform::translate(-1.5, -3.0, -15.0);
-    Sphere *sphere2 = new Sphere(1.0, &tr, vec4(0.0, 0.5, 0.5, 1.0), 0.97);
-/*
+    tr = Transform::translate(-2.0, -0.75, -15.0);
+    Sphere *sphere2 = new Sphere(1.0, &tr, vec4(0.0, 0.5, 0.7, 1.0), 0.97);
+
     Triangle *triangle1 = new Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
 
-    Plane *plane1 = new Plane(vec3(-1.0, -1.0, 0.0), vec3(1.0, -1.0, 0.0), vec3(0.0, -1.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
-*/
+    Plane *plane1 = new Plane(vec3(0.0, 1.0, 0.0), 1.0, vec4(0.0, 0.5, 0.0, 1.0), 0.97);
+    //Plane *plane1 = new Plane(vec3(-1.0, -3.0, 0.0), vec3(1.0, -3.0, 0.0), vec3(0.0, -3.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
 
 	objects[0] = sphere1;
+	//objects[0] = plane1;
     objects[1] = light1;
-    objects[2] = sphere2;
-	//objects[3] = plane1;
-	//objects[3] = triangle1;
+    //objects[2] = sphere2;
+	objects[2] = plane1;
+	//objects[4] = triangle1;
 }
 
 void object_teardown()
@@ -151,6 +151,10 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
             if (hit_result.type == ObjType::light) {
                 LIGHT_HIT_COUNT++;
                 pixel.add_alpha_color(hit_result.color);
+                //std::cout << "hit a light with " << *ray << std::endl;
+            }
+            else if (hit_result.type == ObjType::plane) {
+                std::cout << "hit the plane with " << *ray << std::endl;
             }
         }
     }
@@ -183,7 +187,7 @@ void tracer(Camera *camera)
             Ray *ray = new Ray(origin, direction, RayType::camera);
 
             bool track = false;
-            if (i == (int)(camera->width/2) && j == 305) {
+            if (i == (int)(camera->width/2) -10 && j == 350) {
                 track = true;
             }
             trace_ray(ray, pixel, reflections, track);
@@ -203,7 +207,6 @@ void tracer(Camera *camera)
 	}
 	FreeImage_DeInitialise();
 }
-
 
 int main(int argc, char* argv[])
 {

@@ -6,7 +6,8 @@
 #ifndef PIXEL_H
 #define PIXEL_H
 
-class Pixel {
+class Pixel
+{
 public:
 	float x, y;
     vec4 color;

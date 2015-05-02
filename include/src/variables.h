@@ -24,7 +24,8 @@ const float NEAR = 0.1;
 const float FAR = 1000;
 */
 
-enum class ObjType {
+enum class ObjType
+{
     sphere=0,
     plane,
     triangle,
@@ -32,13 +33,15 @@ enum class ObjType {
     light
 };
 
-enum class LightType {
+enum class LightType
+{
     ambient=0,
     point, //acts as a sphere
     directional
 };
 
-enum class RayType {
+enum class RayType
+{
     general=0,
     camera,
     shadow

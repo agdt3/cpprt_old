@@ -5,92 +5,6 @@
 #include <src/objects.h>
 #include <iostream>
 
-TEST(remapPixel, remapsCorrectlyUnderFOVX90) {
-    // start by assuming that image is at (0,0) in the upper left corner
-    // FOVX=90 is the basis here, and maps to 1.33/1
-    // FOVX<90 produces smaller values
-
-    mat4 matv = mat4(1.0);
-    mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 90.0, 45.0, vec3(0.0));
-    Camera *camp = &cam;
-
-    float TOLERANCE = 0.003;
-    Pixel pix = Pixel(0.0, 0.0, camp);
-    pix.remap();
-    EXPECT_NEAR(pix.x, -1.33, TOLERANCE);
-    EXPECT_NEAR(pix.y, 1.0, TOLERANCE);
-
-    pix.x = 639;
-    pix.y = 0;
-    pix.remap();
-    EXPECT_NEAR(pix.x, 1.33, TOLERANCE);
-    EXPECT_NEAR(pix.y, 1.0, TOLERANCE);
-
-    pix.x = 0;
-    pix.y = 479;
-    pix.remap();
-    EXPECT_NEAR(pix.x, -1.33, TOLERANCE);
-    EXPECT_NEAR(pix.y, -1.0, TOLERANCE);
-
-    pix.x = 639;
-    pix.y = 479;
-    pix.remap();
-    EXPECT_NEAR(pix.x, 1.33, TOLERANCE);
-    EXPECT_NEAR(pix.y, -1.0, TOLERANCE);
-}
-
-TEST(remapPixel, remapsCorrectlyUnderFOVX45) {
-    mat4 matv = mat4(1.0);
-    mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-    Camera *camp = &cam;
-
-    float TOLERANCE = 0.003;
-    Pixel pix = Pixel(0.0, 0.0, camp);
-    pix.remap();
-    EXPECT_NEAR(pix.x, -0.5514, TOLERANCE);
-    EXPECT_NEAR(pix.y, 0.4133, TOLERANCE);
-
-    pix.x = 640;
-    pix.y = 0;
-    pix.remap();
-    //xp -0.55143 yprime 0.413357
-    EXPECT_NEAR(pix.x, 0.5514, TOLERANCE);
-    EXPECT_NEAR(pix.y, 0.4133, TOLERANCE);
-
-    pix.x = 0;
-    pix.y = 480;
-    pix.remap();
-    EXPECT_NEAR(pix.x, -0.5514, TOLERANCE);
-    EXPECT_NEAR(pix.y, -0.4133, TOLERANCE);
-
-    pix.x = 640;
-    pix.y = 480;
-    pix.remap();
-    EXPECT_NEAR(pix.x, 0.5514, TOLERANCE);
-    EXPECT_NEAR(pix.y, -0.4133, TOLERANCE);
-}
-
-TEST(colorPixel, colorsAddedCorrectly) {
-    // add second color over the top of the first
-    mat4 matv = mat4(1.0);
-    mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 90.0, 45.0, vec3(0.0));
-    Camera *camp = &cam;
-
-    Pixel pix = Pixel(0, 0, camp);
-    pix.set_color(vec4(0.0, 1.0, 0.0, 0.5));
-    pix.add_alpha_color(vec4(0.0, 0.0, 1.0, 0.5));
-
-    //a color2.a + color.a * (1 - color2.a);
-    //r = (color2.r * color2.a + (color.r * color.a * (1 - color2.a))) / a
-    float TOLERANCE = 0.00001;
-    EXPECT_NEAR(pix.color.a, 0.75, TOLERANCE);
-    EXPECT_NEAR(pix.color.r, 0.0, TOLERANCE);
-    EXPECT_NEAR(pix.color.g, 0.333333, TOLERANCE);
-    EXPECT_NEAR(pix.color.b, 0.666667, TOLERANCE);
-}
 
 TEST(Transform, vectorsRotateCorrectly) {
     //rotate a around b
@@ -121,6 +35,113 @@ TEST(Transform, correctReflection) {
     EXPECT_NEAR(res.y, 1.0, TOLERANCE);
     EXPECT_NEAR(res.z, 1.0, TOLERANCE);
 }
+
+namespace {
+class BaseTest: public ::testing::Test
+{
+protected:
+    Camera* cam;
+    mat4* world_matrix;
+    float TOLERANCE = 0.003;
+
+    BaseTest() {
+        world_matrix = new mat4(1.0);
+        cam = new Camera(world_matrix, 640, 480, 90.0, 45.0, vec3(0.0));
+    }
+
+    virtual ~BaseTest() {
+        if (cam != NULL) {
+            delete cam;
+        }
+
+        if (world_matrix != NULL) {
+            delete world_matrix;
+        }
+    }
+
+    virtual void SetUp() {}
+
+    virtual void Teardown() {}
+
+};
+
+TEST_F(BaseTest, PixelValueRemapsCorrectlyUnderFOVX90) {
+    // start by assuming that image is at (0,0) in the upper left corner
+    // FOVX=90 is the basis here, and maps to 1.33/1
+    // FOVX<90 produces smaller values
+
+    Pixel pix = Pixel(0.0, 0.0, cam);
+    pix.remap();
+    EXPECT_NEAR(pix.x, -1.33, TOLERANCE);
+    EXPECT_NEAR(pix.y, 1.0, TOLERANCE);
+
+    pix.x = 639;
+    pix.y = 0;
+    pix.remap();
+    EXPECT_NEAR(pix.x, 1.33, TOLERANCE);
+    EXPECT_NEAR(pix.y, 1.0, TOLERANCE);
+
+    pix.x = 0;
+    pix.y = 479;
+    pix.remap();
+    EXPECT_NEAR(pix.x, -1.33, TOLERANCE);
+    EXPECT_NEAR(pix.y, -1.0, TOLERANCE);
+
+    pix.x = 639;
+    pix.y = 479;
+    pix.remap();
+    EXPECT_NEAR(pix.x, 1.33, TOLERANCE);
+    EXPECT_NEAR(pix.y, -1.0, TOLERANCE);
+}
+
+TEST_F(BaseTest, PixelValueRemapsCorrectlyUnderFOVX45) {
+    cam->set_fovx(45.0);
+
+    float TOLERANCE = 0.003;
+    Pixel pix = Pixel(0.0, 0.0, cam);
+    pix.remap();
+    EXPECT_NEAR(pix.x, -0.5514, TOLERANCE);
+    EXPECT_NEAR(pix.y, 0.4133, TOLERANCE);
+
+    pix.x = 640;
+    pix.y = 0;
+    pix.remap();
+    //xp -0.55143 yprime 0.413357
+    EXPECT_NEAR(pix.x, 0.5514, TOLERANCE);
+    EXPECT_NEAR(pix.y, 0.4133, TOLERANCE);
+
+    pix.x = 0;
+    pix.y = 480;
+    pix.remap();
+    EXPECT_NEAR(pix.x, -0.5514, TOLERANCE);
+    EXPECT_NEAR(pix.y, -0.4133, TOLERANCE);
+
+    pix.x = 640;
+    pix.y = 480;
+    pix.remap();
+    EXPECT_NEAR(pix.x, 0.5514, TOLERANCE);
+    EXPECT_NEAR(pix.y, -0.4133, TOLERANCE);
+}
+
+
+TEST_F(BaseTest, PixelColorsAddedCorrectly) {
+    // add second color over the top of the first
+    Pixel pix = Pixel(0, 0, cam);
+    pix.set_color(vec4(0.0, 1.0, 0.0, 0.5));
+    pix.add_alpha_color(vec4(0.0, 0.0, 1.0, 0.5));
+
+    //a color2.a + color.a * (1 - color2.a);
+    //r = (color2.r * color2.a + (color.r * color.a * (1 - color2.a))) / a
+    float TOLERANCE = 0.00001;
+
+    EXPECT_NEAR(pix.color.a, 0.75, TOLERANCE);
+    EXPECT_NEAR(pix.color.r, 0.0, TOLERANCE);
+    EXPECT_NEAR(pix.color.g, 0.333333, TOLERANCE);
+    EXPECT_NEAR(pix.color.b, 0.666667, TOLERANCE);
+}
+
+} // namespace
+
 
 TEST(Sphere, intersectionSingleAxis) {
     mat4 tr = Transform::translate(0.0, 0.0, -3.0);
@@ -442,10 +463,6 @@ TEST(Pixel, createsCorrectObtuseReflectionVector) {
 }
 
 TEST(LightIntersection, oppositeDirectionDoesNotHit) {
-    mat4 matv = mat4(1.0);
-    mat4 *matp = &matv;
-    Camera cam = Camera(matp, 640, 480, 45.0, 45.0, vec3(0.0));
-
     mat4 trl = Transform::translate(0.0, 3.0, -10.0);
     Light lg1 = Light(1.0, &trl, vec4(0.0, 0.0, 0.0, 1.0), 1.0, LightType::point);
 
@@ -460,3 +477,80 @@ TEST(LightIntersection, oppositeDirectionDoesNotHit) {
     bool light_is_hit = lg1.intersects(*shadow_rayp, light_hit, light_n, light_dist1, light_dist2);
     EXPECT_EQ(light_is_hit, false);
 }
+
+TEST(PlaneIntersection, PlaneIntersectsAndReflectsCorrectly) {
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit;
+    float TOLERANCE = 0.01;
+
+    Plane pl1 = Plane(vec3(0.0, 1.0, 0.0), 3.0, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+
+    // -y should hit
+    vec3 origin = vec3(0.0);
+    vec3 direction = glm::normalize(vec3(0.0, -1.0, -1.0));
+    Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
+
+    // y, +x, -x should miss
+    vec3 direction2 = glm::normalize(vec3(0.0, 1.0, -1.0));
+    Ray miss_ray1 = Ray(origin, direction2, RayType::camera);
+    Ray *mrayp1 = &miss_ray1;
+
+    vec3 direction3 = glm::normalize(vec3(1.0, 0.0, -1.0));
+    Ray miss_ray2 = Ray(origin, direction2, RayType::camera);
+    Ray *mrayp2 = &miss_ray2;
+
+    vec3 direction4 = glm::normalize(vec3(-1.0, 0.0, -1.0));
+    Ray miss_ray3 = Ray(origin, direction2, RayType::camera);
+    Ray *mrayp3 = &miss_ray3;
+
+    // should miss
+    is_hit = pl1.intersects(*mrayp1, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, false);
+
+    is_hit = pl1.intersects(*mrayp2, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, false);
+
+    is_hit = pl1.intersects(*mrayp3, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, false);
+
+    //should hit
+    is_hit = pl1.intersects(*rayp, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, true);
+    EXPECT_EQ(n.x, 0.0);
+    EXPECT_EQ(n.y, 1.0);
+    EXPECT_EQ(n.z, 0.0);
+
+    EXPECT_NEAR(dist1, 4.2426, TOLERANCE);
+    EXPECT_NEAR(dist2, 4.2426, TOLERANCE);
+
+    EXPECT_NEAR(hit.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(hit.y, -3.0, TOLERANCE);
+    EXPECT_NEAR(hit.z, -3.0, TOLERANCE);
+
+    Ray reflected = Ray(hit, Transform::reflect(direction, n), RayType::shadow);
+
+    //normalized dir(0, 1, -1)
+    EXPECT_NEAR(reflected.direction.x, 0.0, TOLERANCE);
+    EXPECT_NEAR(reflected.direction.y, 0.707, TOLERANCE);
+    EXPECT_NEAR(reflected.direction.z, -0.707, TOLERANCE);
+}
+
+TEST(PlaneIntersection, PlaneDoesNotIntersectReflectedRay) {
+    vec3 hit, n;
+    float dist1, dist2;
+    bool is_hit;
+    float TOLERANCE = 0.01;
+
+    Plane pl1 = Plane(vec3(0.0, 1.0, 0.0), 3.0, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+
+    vec3 origin = vec3(0.0, -2.99, 0.0);
+    vec3 direction = glm::normalize(vec3(0.0, 1.0, 0.0));
+    Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
+
+    is_hit = pl1.intersects(*rayp, hit, n, dist1, dist2);
+    EXPECT_EQ(is_hit, false);
+}
+

@@ -4,16 +4,19 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-class Camera {
+class Camera
+{
 public:
 	float near = 1.0;
     float far = 10^8;
     int bpp = 24;
     float width, height, fovx, fovy, angle, aspect_ratio;
-	mat4 cameraToWorld, worldToCamera;
+	mat4 camera_to_world, world_to_camera;
     vec3 origin;
 
     Camera(mat4*, float, float, float, float, vec3);
+
+    void set_fovx(float);
 };
 
 // toString representation of camera
