@@ -554,3 +554,27 @@ TEST(PlaneIntersection, PlaneDoesNotIntersectReflectedRay) {
     EXPECT_EQ(is_hit, false);
 }
 
+TEST(PlaneIntersection, PlaneReturnsCorrectIntersection) {
+    vec3 hit, n, hit_pl, n_pl;
+    float dist1, dist2, dist1_pl, dist2_pl;
+    bool is_hit, is_hit_pl;
+    float TOLERANCE = 0.01;
+
+    mat4 trsp = Transform::translate(0.0, 0.0, -2.0);
+    Sphere sp1 = Sphere(1.0, &trsp, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+
+    Plane pl1 = Plane(vec3(0.0, 1.0, 0.0), 3.0, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+
+    vec3 origin = vec3(0.0, 0.0, 0.0);
+    vec3 direction = glm::normalize(vec3(0.0, -0.5, -1.0));
+    Ray ray = Ray(origin, direction, RayType::camera);
+    Ray *rayp = &ray;
+
+    is_hit = sp1.intersects(*rayp, hit, n, dist1, dist2);
+    is_hit_pl = pl1.intersects(*rayp, hit_pl, n_pl, dist1_pl, dist2_pl);
+    EXPECT_EQ(is_hit, true);
+    EXPECT_EQ(is_hit_pl, true);
+    EXPECT_LT(dist1, dist1_pl);
+    //std::cout  << dist1 << " " << dist1_pl << std::endl;
+}
+

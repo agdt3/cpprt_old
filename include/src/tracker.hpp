@@ -20,6 +20,9 @@
 struct RayObjectNode
 {
     std::string key; //composed of ray and object id
+    //why ref and pointer?
+    //rays get destroyed and are concrete
+    //objects persist and are abstract
     Ray ray;
     Object *obj_ptr;
     RayObjectNode* parent;
@@ -38,19 +41,18 @@ class RayObjectTree
 {
 public:
     RayObjectNode *root;
+    unsigned int size = 0;
 
-    RayObjectTree() {};
-    //why ref and pointer?
-    //rays get destroyed and are concrete
-    //objects persist and are abstract
-    RayObjectTree(Ray&, Object*);
+    RayObjectTree();
+    RayObjectTree(RayObjectNode&);
+    RayObjectTree(Ray&, Object&);
 
     void insert(std::string&, RayObjectNode);
     RayObjectNode* search_by_object_id(const std::string&, RayObjectNode*);
-    traverse_dfs(RayObjectNode);
-    bool compare_internal_ids(const std::string&, const int&, const RayObjectNode&);
-    bool compare_keys(const std::string& key, const RayObjectNode& node);
-
+    void traverse_dfs(RayObjectNode);
+    bool compare_internal_ids(const std::string&, const int&, const struct RayObjectNode&);
+    static bool compare_keys(const std::string& key1, const std::string& key2);
+    static bool compare_rays(const Ray&, const Ray&);
     //TODO: Usually requires a queue
     // is there a recursive queueless implementation of bfs?
     void traverse_bfs(RayObjectNode node);

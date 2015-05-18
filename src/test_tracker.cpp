@@ -46,7 +46,7 @@ TEST_F(BaseRayObjectNodeTest, RayObjectNodeInstantiatesCorrectly) {
     //EXPECT_EQ(ron.object, *sphere1);
 }
 
-TEST_F(BaseRayObjectNodeTest, OjectNodeEncodesDecodesCorrectly) {
+TEST_F(BaseRayObjectNodeTest, ObjectNodeEncodesDecodesCorrectly) {
     RayObjectNode ron = RayObjectNode(*ray1, *sphere1, NULL);
     int irid = 2;
     int ioid = 4;
@@ -57,6 +57,34 @@ TEST_F(BaseRayObjectNodeTest, OjectNodeEncodesDecodesCorrectly) {
     ron.decode_key(key1, rid, oid);
     EXPECT_EQ(rid, 2);
     EXPECT_EQ(oid, 4);
+}
+
+//TODO: Implement comparator for ray and object
+TEST_F(BaseRayObjectNodeTest, RayObjectNodeTreeInitializesCorrectlyRayObject) {
+    RayObjectTree tree = RayObjectTree(*ray1, *sphere1);
+    EXPECT_EQ(tree.size, 1);
+    EXPECT_TRUE(RayObjectTree::compare_rays(*ray1, tree.root->ray));
+}
+
+//TODO: Implement comparator for ray and object
+TEST_F(BaseRayObjectNodeTest, RayObjectNodeTreeInitializesCorrectlyNode) {
+    RayObjectNode ron = RayObjectNode(*ray1, *sphere1, NULL);
+    RayObjectTree tree = RayObjectTree(ron);
+    EXPECT_EQ(tree.size, 1);
+    EXPECT_TRUE(RayObjectTree::compare_rays(ron.ray, tree.root->ray));
+}
+
+TEST_F(BaseRayObjectNodeTest, RayObjectNodeTreeComapresKeysCorrectly) {
+    RayObjectNode ron = RayObjectNode(*ray1, *sphere1, NULL);
+    //ron key is composed of the ray id (1) and the object id (1)
+    EXPECT_TRUE(RayObjectTree::compare_keys("1_1", ron.key));
+}
+
+TEST_F(BaseRayObjectNodeTest, RayObjectNodeTreeFindsNodeCorrectly) {
+    RayObjectNode ron = RayObjectNode(*ray1, *sphere1, NULL);
+    RayObjectTree tree = RayObjectTree(ron);
+    RayObjectNode *ronptr = tree.search_by_object_id(ron.key, tree.root);
+    EXPECT_EQ(ron.key, ronptr->key);
 }
 
 } //namespace

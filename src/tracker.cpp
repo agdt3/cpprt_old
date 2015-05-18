@@ -23,11 +23,11 @@ void _key_decomposition(std::string& key, std::string& sstr1, std::string& sstr2
 }
 
 //Ray Object Node
-RayObjectNode::RayObjectNode (Ray& new_ray, Object& new_obj, RayObjectNode *parent=NULL) : ray(new_ray) {
+RayObjectNode::RayObjectNode (Ray& new_ray, Object& new_obj, RayObjectNode *par=NULL) : ray(new_ray) {
     key = encode_key(new_ray.id, new_obj.id);
     //ray = new_ray; //copy
     obj_ptr = &new_obj;
-    parent = parent;
+    parent = par;
 }
 
 std::string RayObjectNode::encode_key (int& rid, int& oid) {
@@ -50,52 +50,77 @@ void RayObjectNode::print() {
 }
 
 //Ray Object Tree
-RayObjecTree::RayObjectTree(Ray ray&, Object obj&) {
-    root = RayObjectNode(ray, object, NULL);
+RayObjectTree::RayObjectTree(RayObjectNode& ron) {
+    root = &ron;
+    size++;
 }
 
-void RayObjecTree::insert(std::string& parent_key, RayObjectNode child) {
+RayObjectTree::RayObjectTree(Ray& ray, Object& obj) {
+    root = new RayObjectNode(ray, obj, NULL);
+    size++;
+}
+
+void RayObjectTree::insert(std::string& parent_key, RayObjectNode child) {
     if (root == NULL) {
-        RayObjectNode node = new RayObjectNode();
-        root = node;
+        root = &child; //I hope this makes a copy!
+        size++;
     }
-    RayObjectNode parent = search_by_object_id(key, root);
-    if (parent != NULL) {
-        parent->children.push(child);
+    RayObjectNode *parent = search_by_object_id(parent_key, root);
+    if (parent) {
+        parent->children.push_back(&child);
+        size++;
     }
 }
 
-RayObjectNode* RayObjecTree::search_by_object_id(const std::string& key, RayObjectNode *node)  {
-    if (compare_keys(key, node)) return node;
+RayObjectNode* RayObjectTree::search_by_object_id(const std::string& key, RayObjectNode *node)  {
+    if (compare_keys(key, node->key)) return node;
     if (node->children.size() == 0) return NULL;
-    for (int i=0; i < node.children.size(); ++i) {
-        search_by_object_id(key, node.children[i]);
+    for (int i=0; i < node->children.size(); ++i) {
+        search_by_object_id(key, node->children[i]);
     }
 }
 
-RayObjecTree::traverse_dfs(RayObjectNode node) {
+void RayObjectTree::traverse_dfs(RayObjectNode node) {
     if (node.children.size() == 0) return;
     node.print();
     for (int i=0; i < node.children.size(); ++i) {
-       traverse_dfs(node.children[i]);
+       traverse_dfs(*node.children[i]);
     }
 }
 
 //compare on object type, object id, ray type, ray id or some subset
-bool RayObjecTree::compare_internal_ids(const std::string& param, int& id, RayObjectNode& node) {
-    if (param == "ray" && id = node.ray.id) ||
-       (param == "obj" && id == node.obj.id) {
+/*
+bool RayObjectTree::compare_internal_ids(const std::string& param, int& id, RayObjectNode& node) {
+    if ((param == "ray" && id == node.ray.id) ||
+       (param == "obj" && id == node.obj_ptr->id)) {
            return true;
+    }
+    return false;
+}*/
+
+//bool RayObjectTree::compare_keys(const std::string& key, const RayObjectNode& node) {
+//static
+bool RayObjectTree::compare_keys(const std::string& key1, const std::string& key2) {
+    if (key1 == key2) return true;
+    return false;
+}
+
+//static
+bool RayObjectTree::compare_rays(const Ray& ray1, const Ray& ray2) {
+    //not sure how reliable ID comp is
+    //this should probably be an overload on ray == method
+    if (ray1.id == ray2.id) return true;
+
+    if ((ray1.origin == ray2.origin) &&
+        (ray1.direction == ray2.direction) &&
+        (ray1.type == ray2.type)) {
+        return true;
     }
     return false;
 }
 
-bool RayObjecTree::compare_keys(const std::string& key, const RayObjectNode& node) {
-    if (node.id == key) return true;
-    return false;
-}
 
-void RayObjecTree::traverse_bfs(RayObjectNode node) {
+void RayObjectTree::traverse_bfs(RayObjectNode node) {
     //TODO: Usually requires a queue
     // is there a recursive queueless implementation of bfs?
 }

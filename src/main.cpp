@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include "src/variables.h"
 #include "src/main.h"
 #include "FreeImage/FreeImage.h"
@@ -21,7 +22,7 @@ int HIT_COUNT = 0;
 int LIGHT_HIT_COUNT = 0;
 const bool LIGHT_VISIBLE = false;
 const int NUM_OBJECTS = 3;
-const int MAX_REFLECTIONS = 2;
+const int MAX_REFLECTIONS = 1;
 Object* objects[NUM_OBJECTS];
 
 /*
@@ -43,7 +44,7 @@ void object_setup()
     Light *light1 = new Light(2.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
 
 	mat4 world = mat4(1.0);
-	tr = Transform::translate(0.0, -0.85, -15.0);
+	tr = Transform::translate(0.0, -0.75, -15.0);
 	mat4 final = world * tr;
     Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
 
@@ -52,14 +53,14 @@ void object_setup()
 
     Triangle *triangle1 = new Triangle(vec3(-2.0, 0.0, -25.0), vec3(0.0, 8.0, -12.0), vec3(3.0, -3.0, -5.0), vec4(1.0, 0.0, 0.0, 1.0));
 
-    Plane *plane1 = new Plane(vec3(0.0, 1.0, 0.0), 1.0, vec4(0.0, 0.5, 0.0, 1.0), 0.97);
+    Plane *plane1 = new Plane(vec3(0.0, 1.0, 0.0), 1.0, vec4(0.0, 0.5, 0.0, 1.0), 0.99);
     //Plane *plane1 = new Plane(vec3(-1.0, -3.0, 0.0), vec3(1.0, -3.0, 0.0), vec3(0.0, -3.0, -1.0), vec4(0.0, 0.5, 0.0, 1.0));
 
 	objects[0] = sphere1;
 	//objects[0] = plane1;
     objects[1] = light1;
     //objects[2] = sphere2;
-	objects[2] = plane1;
+    objects[2] = plane1;
 	//objects[4] = triangle1;
 }
 
@@ -95,9 +96,13 @@ struct Hit
     vec4 color;
 };
 
+int NUM_HIT_SPHERE = 0;
+int NUM_CREATED = 0;
+ofstream myfile;
+
 void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
 {
-    if (reflections >= MAX_REFLECTIONS) {
+    if (reflections > MAX_REFLECTIONS) {
         return;
     }
     else {
@@ -105,19 +110,20 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
     }
 
     if (track) {
+        cout << "tracked ray " << endl;
         cout << *ray << endl;
     }
 
     float nearest = INFINITY;
     float dist1, dist2;
     vec3 hit, n;
-    Hit hit_result = Hit();
+    Hit hit_result;
 
     for (int k = 0; k < NUM_OBJECTS; k++) {
 	    Object* obj = objects[k];
         if (obj->intersects(*ray, hit, n, dist1, dist2)) {
             if (abs(dist1) < nearest) {
-                //store results of hit here - probably should use a struct
+                hit_result = Hit();
                 HIT_COUNT++;
                 nearest = abs(dist1);
                 hit_result.is_hit = true;
@@ -140,9 +146,9 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
                 pixel.set_color(hit_result.color);
 
                 //fire a new ray
-                vec3 dir = (Transform::reflect(ray->direction, n));
+                vec3 dir = (Transform::reflect(ray->direction, hit_result.n));
                 dir = glm::normalize(dir);
-                Ray *nray = new Ray(hit, dir, RayType::shadow);
+                Ray *nray = new Ray(hit_result.hit, dir, RayType::shadow);
                 trace_ray(nray, pixel, reflections, track);
                 delete nray;
             }
@@ -151,10 +157,6 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
             if (hit_result.type == ObjType::light) {
                 LIGHT_HIT_COUNT++;
                 pixel.add_alpha_color(hit_result.color);
-                //std::cout << "hit a light with " << *ray << std::endl;
-            }
-            else if (hit_result.type == ObjType::plane) {
-                std::cout << "hit the plane with " << *ray << std::endl;
             }
         }
     }
@@ -187,9 +189,6 @@ void tracer(Camera *camera)
             Ray *ray = new Ray(origin, direction, RayType::camera);
 
             bool track = false;
-            if (i == (int)(camera->width/2) -10 && j == 350) {
-                track = true;
-            }
             trace_ray(ray, pixel, reflections, track);
 
             //draw pixel
@@ -210,14 +209,23 @@ void tracer(Camera *camera)
 
 int main(int argc, char* argv[])
 {
+    //myfile.open("test/ids2.txt");
+
     Camera *camp = world_setup();
     tracer(camp);
     world_teardown(camp);
     cout << endl << "hits " << HIT_COUNT << " total " << (camp->width * camp->height) << endl;
     cout << "light hits " << LIGHT_HIT_COUNT << endl;
-
+    //cout << "NUM_RAYS_LIGHT " << NUM_RAYS_LIGHT << endl;
+    //cout << "NUM_RAYS_HIT_LIGHT " << NUM_RAYS_HIT_LIGHT << endl;
+    //cout << "NUM_RAYS_HIT_ELSE " << NUM_RAYS_HIT_ELSE << endl;
+    cout << "NUM_HIT_SPHERE " << NUM_HIT_SPHERE << endl;
+    cout << "NUM_CREATED " << NUM_CREATED << endl;
+    cout << (ObjType::plane == ObjType::light) << endl;
     printf("Hit any key to continue> ");
     getchar();
+
+    //myfile.close();
 
     if (RUN_TEST) {
         ::testing::InitGoogleTest(&argc, argv);
