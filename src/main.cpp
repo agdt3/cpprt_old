@@ -13,6 +13,7 @@
 #include "src/objects.h"
 #include "gtest/gtest.h"
 #include "src/camera.h"
+#include "src/texture.hpp"
 
 using namespace std;
 
@@ -46,7 +47,8 @@ void object_setup()
 	mat4 world = mat4(1.0);
 	tr = Transform::translate(0.0, -0.75, -15.0);
 	mat4 final = world * tr;
-    Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
+    //Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
+    Sphere *sphere1 = new Sphere(3.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97, true, "resources/test.png");
 
     tr = Transform::translate(-2.0, -0.75, -15.0);
     Sphere *sphere2 = new Sphere(1.0, &tr, vec4(0.0, 0.5, 0.7, 1.0), 0.97);
@@ -93,7 +95,10 @@ struct Hit
     vec3 hit, n;
     float d1, d2;
     ObjType type;
+    Object *obj;
     vec4 color;
+    bool has_texture;
+    std::string texture_path;
 };
 
 int NUM_HIT_SPHERE = 0;
@@ -133,6 +138,9 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
                 hit_result.d2 = dist2;
                 hit_result.type = obj->type;
                 hit_result.color = obj->color;
+                hit_result.has_texture = obj->has_texture;
+                hit_result.texture_path = obj->texture_filepath;
+                hit_result.obj = obj;
             }
         }
     }
@@ -143,8 +151,25 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
                 pixel.set_color(hit_result.color);
             }
             else if (hit_result.type != ObjType::light) {
-                pixel.set_color(hit_result.color);
-
+                if (hit_result.has_texture) {
+                    //this is temporary
+                    Sphere *sp = (Sphere*)hit_result.obj;
+                    float u, v;
+                    sp->get_uv(hit_result.n, u, v);
+                    //std::cout << u << " " << v << std::endl;
+                    vec3 rgb = vec3(0.0);
+                    if (TextureManager::get_uv_pixel_color(
+                        rgb,
+                        hit_result.texture_path,
+                        u,
+                        v))
+                    {
+                        vec4 rgb4 = vec4(rgb.r, rgb.g, rgb.b, 1.0);
+                        pixel.set_color(rgb4);
+                    };
+                } else {
+                    pixel.set_color(hit_result.color);
+                }
                 //fire a new ray
                 vec3 dir = (Transform::reflect(ray->direction, hit_result.n));
                 dir = glm::normalize(dir);
@@ -207,9 +232,47 @@ void tracer(Camera *camera)
 	FreeImage_DeInitialise();
 }
 
+FIBITMAP* load_image (const std::string& imagepath, int flag) {
+    FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
+    const char* path = imagepath.c_str();
+
+    fif = FreeImage_GetFileType(path, 0);
+    if (fif == FIF_UNKNOWN) {
+        fif = FreeImage_GetFIFFromFilename(path);
+    }
+
+    if ((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
+        FIBITMAP *file = FreeImage_Load(fif, path, flag);
+        return file;
+    }
+    return NULL;
+}
+
+bool get_uv_pixel_color(vec3& rgb, FIBITMAP* file, RGBQUAD* val, const float& u, const float& v) {
+    if (file == NULL || val == NULL) {
+        return false;
+    } else {
+        unsigned int width = FreeImage_GetWidth(file);
+        unsigned int height = FreeImage_GetHeight(file);
+        unsigned int x = width * u;
+        unsigned int y = height * v;
+        if (FreeImage_GetPixelColor(file, x, y, val)) {
+            rgb.r = val->rgbRed / 255.0;
+            rgb.g = val->rgbGreen / 255.0;
+            rgb.b = val->rgbBlue / 255.0;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
+}
+
 int main(int argc, char* argv[])
 {
     //myfile.open("test/ids2.txt");
+
+    FIBITMAP *sphere_texture = load_image("resources/test.png", 0);
 
     Camera *camp = world_setup();
     tracer(camp);

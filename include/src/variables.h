@@ -5,6 +5,7 @@
 
 //const int NUM_OBJECTS = 2;
 const float MPI = 3.14125953589793;
+const float DIVPI = 1 / 3.14125953589793;
 /*
 const int WIDTH = 640;
 const float INVWIDTH = 1.0 / WIDTH;

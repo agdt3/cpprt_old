@@ -5,18 +5,20 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 
+//TODO: Not currently used, but  perhaps should replace the struct in main
+/*
 struct HitStruct
 {
-public:
     bool contact;   //did hit?
     vec3 hit;       //hit point
     vec3 n;         //n vector to hit area
     float t0;       //near hit distance
     float t1;       //far hit distance
 };
-
+*/
 //This is a pure virtual class that allows
 //us to create an array of pointers to various subclasses
+
 class Object
 {
 public:
@@ -25,11 +27,13 @@ public:
 
     ObjType type;
 	vec4 color;
+    bool has_texture;
+    std::string texture_filepath;
     float easing_distance;
 	mat4 objectToWorld, worldToObject;
 
 	Object();
-	Object(mat4*, vec4, float);
+	Object(mat4*, vec4, float, bool, std::string);
 	Object(mat4*, vec4, float, int); //testing constructor with id
 	virtual bool intersects (const Ray&, vec3&, vec3&, float&, float&) =0;
 };
@@ -39,11 +43,21 @@ class Sphere : public Object
 public:
 	vec4 center;
 	float radius;
+    //vec3 pole; //may need to be a vec4 in the future
+    //vec3 equator;
+    vec3 pole = vec3(0.0, 1.0, 0.0);
+    vec3 equator = vec3(-1.0, 0.0, 0.0);
 
 	Sphere(float, mat4*, vec4 col, float);
+	Sphere(float, mat4*, vec4 col, float, bool, std::string);
 	Sphere(float, mat4*, vec4 col, float, int); //testing constructor
     Sphere(const Sphere&); //copy
 	bool intersects (const Ray&, vec3&, vec3&, float&, float&);
+    float get_phi(const vec3&);
+    float get_theta(const vec3&, const float&);
+    float get_v(const float&);
+    float get_u(const vec3&, const float&);
+    void get_uv(const vec3&, float&, float&);
 };
 
 class Light : public Object

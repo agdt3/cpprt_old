@@ -257,6 +257,39 @@ TEST(Sphere, intersectionTripleAxis) {
     EXPECT_NEAR(n.z, norm_n.z, TOLERANCE);
 }
 
+TEST(Sphere, hasCorrectUVValues) {
+    mat4 tr = Transform::translate(0.0, 0.0, 0.0);
+    Sphere sp1 = Sphere(1.0, &tr, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
+    float TOLERANCE = 0.01;
+
+    //(0.0, 0.707, 0.707)
+    vec3 n = glm::normalize(vec3(0.0, 1.0, 1.0));
+    float expected_phi = 2.356;
+    float expected_theta = 0.25;
+    float expected_v = 2.356 / MPI;
+    float expected_u = expected_theta;
+    //acos(-1 * dot(n, pole)) = acos(-1 * dot((0, 0.707, 0.707), (0, 1, 0)))
+    //acos(-0.707)
+    //2.356 -> this is the wider of the two angles between these vectors
+    //i.e. acos(0.707) = 0.785 = 45 deg, acos(-0.707) = 2.35 = ~135 deg
+    float phi = sp1.get_phi(n);
+    EXPECT_NEAR(phi, expected_phi, TOLERANCE);
+
+    //acos(dot(equator, n) / sin(phi)) * 0.5 * 1/PI
+    //acos(dot((-1, 0, 0), (0, 0.707, 0.707)) / 0.707) / 6.28
+    //acos(0) = 1.5707 / 6.28 = 0.25
+    float theta = sp1.get_theta(n, phi);
+    EXPECT_NEAR(theta, expected_theta, TOLERANCE);
+
+    //dot(cross(pole, equator), n) > 0 ? theta : 1 - theta
+    float u = sp1.get_u(n, theta);
+    EXPECT_NEAR(u, expected_u, TOLERANCE);
+
+    //phi * 1/PI = 2.356 / 3.1415926
+    float v = sp1.get_v(phi);
+    EXPECT_NEAR(v, expected_v, TOLERANCE);
+}
+
 TEST(Light, intersectionTripleAxis) {
     mat4 tr = Transform::translate(3.0, 3.0, -3.0);
     Light lg1 = Light(1.0, &tr, vec4(0.0, 0.0, 0.0, 1.0), 1.0, LightType::point);

@@ -6,23 +6,32 @@
 //static member definition
 int Object::id_generator = 0;
 
-Object::Object() {
+Object::Object () {
     id = id_generator++;
     objectToWorld = mat4(1.0);
 	worldToObject = glm::inverse(objectToWorld);
 	color = vec4(0.0, 0.0, 0.0, 1.0);
 }
 
-Object::Object(mat4 *otw, vec4 col, float ease_dist=1.0) {
+Object::Object (
+    mat4 *otw,
+    vec4 col,
+    float ease_dist=1.0,
+    bool has_text=false,
+    std::string filepath="")
+{
     id = id_generator++;
     objectToWorld = *otw;
     worldToObject = glm::inverse(objectToWorld);
     color = col;
     easing_distance = ease_dist;
+
+    has_texture = has_text;
+    texture_filepath = filepath;
 }
 
 //testing constructor with set id
-Object::Object(mat4 *otw, vec4 col, float ease_dist, int new_id) {
+Object::Object (mat4 *otw, vec4 col, float ease_dist, int new_id) {
     id = new_id;
     objectToWorld = *otw;
     worldToObject = glm::inverse(objectToWorld);
@@ -31,22 +40,32 @@ Object::Object(mat4 *otw, vec4 col, float ease_dist, int new_id) {
 }
 
 //Uses Object constructor by passing it parameters //superclass constructor executes first
-Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist) : Object(otw, col, ease_dist) {
+Sphere::Sphere (float r, mat4 *otw, vec4 col, float ease_dist) : Object(otw, col, ease_dist) {
 	type = ObjType::sphere;
 	center =  objectToWorld * vec4(0.0, 0.0, 0.0, 1.0);
-    //std::cout << "s" << center.x << " " << center.y << " " << center.z << std::endl;
+	radius = r; //define the radius explicitely, not as part of a transform, although really should
+
+    //currently pole and equator are hardcoded
+    //but should be modified based on sphere rotaion
+}
+
+Sphere::Sphere (float r, mat4 *otw, vec4 col, float ease_dist, bool has_text, std::string filename) : Object(otw, col, ease_dist, has_text, filename) {
+	type = ObjType::sphere;
+	center =  objectToWorld * vec4(0.0, 0.0, 0.0, 1.0);
 	radius = r; //define the radius explicitely, not as part of a transform, although really should
 }
 
 //testing constructor with id
-Sphere::Sphere(float r, mat4 *otw, vec4 col, float ease_dist, int new_id) : Object(otw, col, ease_dist, new_id) {
+Sphere::Sphere (float r, mat4 *otw, vec4 col, float ease_dist, int new_id) : Object(otw, col, ease_dist, new_id) {
 	type = ObjType::sphere;
 	center =  objectToWorld * vec4(0.0, 0.0, 0.0, 1.0);
 	radius = r;
+    pole = vec3(0.0, 1.0, 0.0);
+    equator = vec3(0.0, 0.0, 1.0);
 }
 
 //copy constructor
-Sphere::Sphere(const Sphere& source) {
+Sphere::Sphere (const Sphere& source) {
     color = source.color;
     objectToWorld = source.objectToWorld;
     easing_distance = source.easing_distance;
@@ -71,11 +90,6 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
 
 	    float D2 = L2OC - pow(t_ca, 2);
 
-        //std::cout << "SC " << SC << std::endl;
-        //std::cout << "OC " << OC << std::endl;
-        //std::cout << "L2OC " << L2OC << std::endl;
-        //std::cout << "t_ca " << t_ca << std::endl;
-        //std::cout << "D2 " << D2 << std::endl;
         // if the distance between the closest point to the sphere center on
         // the projected ray is greater than the radius, then the projected
         // ray is definitely outside the bounds of the sphere
@@ -96,10 +110,6 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
         float THC = sqrt(T2HC);
         t0 = t_ca - THC; //distance to point of impact
 	    t1 = t_ca + THC; //distance to other side of sphere
-
-        //std::cout << "T2HC " << T2HC << std::endl;
-        //std::cout << "t0 " << t0 << std::endl;
-        //std::cout << "t1 " << t1 << std::endl;
 
         float dist = easing_distance * t0;
 	    hit = ray.origin + (dist * RD);
@@ -135,6 +145,35 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
         }
     }
     return false;
+}
+
+float Sphere::get_phi (const vec3& n) {
+    return glm::acos(glm::dot(((float)-1.0 * n), pole));
+    //return glm::acos(glm::dot(n, pole));
+}
+
+float Sphere::get_theta (const vec3& n, const float& phi) {
+    //DIVPI is precalculated 1/PI
+    return glm::acos(glm::dot(equator, n) / sin(phi)) * DIVPI * 0.5;
+}
+
+float Sphere::get_v (const float& phi) {
+    return phi * DIVPI;
+}
+
+float Sphere::get_u (const vec3& n, const float& theta) {
+    if (glm::dot(glm::cross(pole, equator), n) > 0) {
+        return theta;
+    } else {
+        return 1.0 - theta;
+    }
+}
+
+void Sphere::get_uv (const vec3& n, float& u, float& v) {
+    float phi = get_phi(n);
+    float theta = get_theta(n, phi);
+    u = get_u(n, theta);
+    v = get_v(phi);
 }
 
 Light::Light(float r, mat4 *otw, vec4 col, float ease_dist=1.0, LightType l_type=LightType::point) : Object(otw, col, ease_dist) {
