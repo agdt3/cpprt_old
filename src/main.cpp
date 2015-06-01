@@ -153,6 +153,7 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
             else if (hit_result.type != ObjType::light) {
                 if (hit_result.has_texture) {
                     //this is temporary
+                    //TODO: Figure out dynamic casting here
                     Sphere *sp = (Sphere*)hit_result.obj;
                     float u, v;
                     sp->get_uv(hit_result.n, u, v);

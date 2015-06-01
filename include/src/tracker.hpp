@@ -8,6 +8,15 @@
 #ifndef TRACKER_HPP
 #define TRACKER_HPP
 
+
+
+//Primarily I need to be able to differentiate between the ray types that have
+//hit the object. This makes things like Tris maybe not as useful
+//A tri could track all the objects hit by a set of rays generated at a single
+//pixel origin. But it may not be able to determine the difference between
+//the number of camera rays vs. the number of reflected rays that have
+
+
 //I want to track
 //per pixel, where each ray went and the offshoot rays it produced
 //for each such ray, I want to know th object it slammed into

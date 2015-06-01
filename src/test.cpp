@@ -268,6 +268,7 @@ TEST(Sphere, hasCorrectUVValues) {
     float expected_theta = 0.25;
     float expected_v = 2.356 / MPI;
     float expected_u = expected_theta;
+
     //acos(-1 * dot(n, pole)) = acos(-1 * dot((0, 0.707, 0.707), (0, 1, 0)))
     //acos(-0.707)
     //2.356 -> this is the wider of the two angles between these vectors
@@ -288,6 +289,12 @@ TEST(Sphere, hasCorrectUVValues) {
     //phi * 1/PI = 2.356 / 3.1415926
     float v = sp1.get_v(phi);
     EXPECT_NEAR(v, expected_v, TOLERANCE);
+
+    //the whole function should also work
+    float u2, v2;
+    sp1.get_uv(n, u2, v2);
+    EXPECT_NEAR(u2, expected_u, TOLERANCE);
+    EXPECT_NEAR(v2, expected_v, TOLERANCE);
 }
 
 TEST(Light, intersectionTripleAxis) {
