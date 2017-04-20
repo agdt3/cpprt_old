@@ -83,6 +83,11 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
         float SR2 = radius * radius;
         vec3 OC = SC - ray.origin;
         float L2OC = glm::dot(OC, OC);
+        std::cout << "SC " << SC << std::endl;
+        std::cout << "RD " << RD << std::endl;
+        std::cout << "SR2 " << SR2 << std::endl;
+        std::cout << "OC " << OC << std::endl;
+        std::cout << "L2OC " << L2OC << std::endl;
 
         float t_ca = glm::dot(OC, RD);
         //sphere located behind ray origin
@@ -98,6 +103,9 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
 	    float T2HC = SR2 - D2;
         if (T2HC < 0) return false;
 
+        std::cout << "T_CA " << t_ca << std::endl;
+        std::cout << "D2 " << D2 << std::endl;
+        std::cout << "T2HC " << T2HC << std::endl;
         //if the origin is inside the sphere of light, it counts as a hit
         if (L2OC < SR2) {
             t0 = 0.0;
@@ -110,6 +118,7 @@ bool Sphere::intersects (const Ray &ray, vec3 &hit, vec3 &n, float &t0, float &t
         float THC = sqrt(T2HC);
         t0 = t_ca - THC; //distance to point of impact
 	    t1 = t_ca + THC; //distance to other side of sphere
+        std::cout << "THC " << THC << std::endl;
 
         float dist = easing_distance * t0;
 	    hit = ray.origin + (dist * RD);

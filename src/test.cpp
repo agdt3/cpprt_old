@@ -538,11 +538,11 @@ TEST(PlaneIntersection, PlaneIntersectsAndReflectsCorrectly) {
     Ray *mrayp1 = &miss_ray1;
 
     vec3 direction3 = glm::normalize(vec3(1.0, 0.0, -1.0));
-    Ray miss_ray2 = Ray(origin, direction2, RayType::camera);
+    Ray miss_ray2 = Ray(origin, direction3, RayType::camera);
     Ray *mrayp2 = &miss_ray2;
 
     vec3 direction4 = glm::normalize(vec3(-1.0, 0.0, -1.0));
-    Ray miss_ray3 = Ray(origin, direction2, RayType::camera);
+    Ray miss_ray3 = Ray(origin, direction4, RayType::camera);
     Ray *mrayp3 = &miss_ray3;
 
     // should miss
@@ -581,7 +581,6 @@ TEST(PlaneIntersection, PlaneDoesNotIntersectReflectedRay) {
     vec3 hit, n;
     float dist1, dist2;
     bool is_hit;
-    float TOLERANCE = 0.01;
 
     Plane pl1 = Plane(vec3(0.0, 1.0, 0.0), 3.0, vec4(0.0, 0.0, 0.0, 1.0), 1.0);
 
@@ -598,7 +597,6 @@ TEST(PlaneIntersection, PlaneReturnsCorrectIntersection) {
     vec3 hit, n, hit_pl, n_pl;
     float dist1, dist2, dist1_pl, dist2_pl;
     bool is_hit, is_hit_pl;
-    float TOLERANCE = 0.01;
 
     mat4 trsp = Transform::translate(0.0, 0.0, -2.0);
     Sphere sp1 = Sphere(1.0, &trsp, vec4(0.0, 0.0, 0.0, 1.0), 1.0);

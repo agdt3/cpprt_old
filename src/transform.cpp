@@ -141,10 +141,10 @@ mat4 Transform::translate(const float &tx, const float &ty, const float &tz)
 
 vec3 Transform::upvector(const vec3 &up, const vec3 & zvec) 
 {
-    vec3 x = glm::cross(up,zvec); 
-    vec3 y = glm::cross(zvec,x); 
-    vec3 ret = glm::normalize(y); 
-    return ret; 
+    vec3 x = glm::cross(up,zvec);
+    vec3 y = glm::cross(zvec,x);
+    vec3 ret = glm::normalize(y);
+    return ret;
 }
 
 bool Transform::solve_quadratic(float a, float b, float c, float &r1, float &r2) {
@@ -171,7 +171,7 @@ bool Transform::solve_quadratic(float a, float b, float c, float &r1, float &r2)
     //equal is a tangent
     //instead of r1 == r2 for floats, use epsilon difference comparison
     float epsilon = 0.0001;
-    if (abs(r1 - r2) < epsilon) return false;
+    if (glm::abs(r1 - r2) < epsilon) return false;
     else if ((r1 > 0 && r2 < 0) || (r2 > 0 && r1 < 0)) {
         //one > 0, one < 0 - ray is inside sphere
         return false;

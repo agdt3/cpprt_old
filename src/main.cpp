@@ -21,9 +21,10 @@ using namespace std;
 const bool RUN_TEST = true;
 int HIT_COUNT = 0;
 int LIGHT_HIT_COUNT = 0;
-const bool LIGHT_VISIBLE = false;
+const bool LIGHT_VISIBLE = true;
 const int NUM_OBJECTS = 3;
 const int MAX_REFLECTIONS = 1;
+const bool USE_TEXTURES = true;
 Object* objects[NUM_OBJECTS];
 
 /*
@@ -42,13 +43,13 @@ void init_objects() {
 void object_setup()
 {
     mat4 tr = Transform::translate(-2.0, 3.0, -13.0);
-    Light *light1 = new Light(2.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
+    Light *light1 = new Light(1.0, &tr, vec4(1.0, 1.0, 1.0, 0.5), 0.97, LightType::point);
 
 	mat4 world = mat4(1.0);
 	tr = Transform::translate(0.0, -0.75, -15.0);
 	mat4 final = world * tr;
     //Sphere *sphere1 = new Sphere(1.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97);
-    Sphere *sphere1 = new Sphere(3.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97, true, "resources/test.png");
+    Sphere *sphere1 = new Sphere(2.0, &final, vec4(0.0, 0.0, 0.5, 1.0), 0.97, true, "resources/test.png");
 
     tr = Transform::translate(-2.0, -0.75, -15.0);
     Sphere *sphere2 = new Sphere(1.0, &tr, vec4(0.0, 0.5, 0.7, 1.0), 0.97);
@@ -151,7 +152,7 @@ void trace_ray(Ray *ray, Pixel &pixel, int reflections, bool track=false)
                 pixel.set_color(hit_result.color);
             }
             else if (hit_result.type != ObjType::light) {
-                if (hit_result.has_texture) {
+                if (hit_result.has_texture && USE_TEXTURES) {
                     //this is temporary
                     //TODO: Figure out dynamic casting here
                     Sphere *sp = (Sphere*)hit_result.obj;
@@ -271,9 +272,9 @@ bool get_uv_pixel_color(vec3& rgb, FIBITMAP* file, RGBQUAD* val, const float& u,
 
 int main(int argc, char* argv[])
 {
-    //myfile.open("test/ids2.txt");
 
-    FIBITMAP *sphere_texture = load_image("resources/test.png", 0);
+    /*
+    load_image("resources/test.png", 0);
 
     Camera *camp = world_setup();
     tracer(camp);
@@ -288,8 +289,7 @@ int main(int argc, char* argv[])
     cout << (ObjType::plane == ObjType::light) << endl;
     printf("Hit any key to continue> ");
     getchar();
-
-    //myfile.close();
+    */
 
     if (RUN_TEST) {
         ::testing::InitGoogleTest(&argc, argv);
